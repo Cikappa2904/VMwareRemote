@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    
+    <ul id="specsUL">
+        <li>CPU Cores: {{cpuSpecs1}}</li>
+        <li>RAM: {{RAMSpecs1}} MB</li>
+        <li>Firmware type: {{biosType1}}</li>
+        <li>Host VM path: {{vmPath1}}</li>
+        <li>IsON: {{isON}}</li>
+    </ul>
+    <button id="runVM">run</button>
+</body>
+<script>
+    document.title = "{{vmName}}";
+    const specsUL = document.getElementById("specsUL");
+    let li = document.createElement("li");
+    if("{{vncPort}}"!="None")
+    {
+        li.appendChild(document.createTextNode("VNC Port: " + "{{vncPort}}"));
+        specsUL.appendChild(li);
+    }
+
+    const runButton = document.getElementById("runVM");
+    const isON = "{{isON}}";
+    console.log(isON);
+    if(isON == "True")
+    {
+        runButton.textContent = "Shutdown";
+        runButton.onclick = stopVM;
+
+    }
+    else
+    {
+        runButton.onclick = runVM;
+    }
+    function runVM()
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", "/runVM" + "?vmNumber=" + "{{vmNumber}}", false ); // false for synchronous request
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    }
+    function stopVM()
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", "/stopVM" + "?vmNumber=" + "{{vmNumber}}", false ); // false for synchronous request
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    }
+</script>
+</html>

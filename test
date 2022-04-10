@@ -1,0 +1,24 @@
+f = open(r"C:\Users\cikap\AppData\Roaming\VMware\inventory.vmls")
+txt = f.readlines()
+vmList = ''
+counter = 0
+for line in txt:
+    lineToSearch = '.config = "'
+    if lineToSearch in line:
+        print('a')
+        sliceIndex = 0
+        for match in re.finditer('.vmx', line):
+            vmxPosition = match.start()
+            slicedLine = line[:vmxPosition]
+            i = 0
+            for letter in slicedLine:
+                if slicedLine[-i] == "\\":
+                    sliceIndex = -i
+                    break
+                i+=1
+            
+                
+        vmList+=slicedLine[sliceIndex:]
+        counter+=1
+
+f.close()
