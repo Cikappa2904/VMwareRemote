@@ -28,22 +28,40 @@
 
     const runButton = document.getElementById("runVM");
     const isON = "{{isON}}";
-    console.log(isON);
     if(isON == "True")
     {
         runButton.textContent = "Shutdown";
         runButton.onclick = stopVM;
 
+
     }
-    else
+    else if(isON == "False")
     {
         runButton.onclick = runVM;
     }
-    function runVM()
+    else 
+    {
+        runButton.style.display = "none";
+    }
+
+
+    function runVM(runButton)
     {
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", "/runVM" + "?vmNumber=" + "{{vmNumber}}", false ); // false for synchronous request
+        xmlHttp.open( "GET", "/runVM" + "?vmNumber=" + "{{vmNumber}}", true ); // false for synchronous request
         xmlHttp.send(null);
+        xmlHttp.callback = function()
+        {
+            console.log("ciao");
+            if (xmlHttp.responseText == 'VM Run')
+            {
+                
+                runButton.textContent = "Shutdown";
+                runButton.onclick = stopVM;
+            }
+        }
+        
+        
         return xmlHttp.responseText;
     }
     function stopVM()
@@ -51,6 +69,11 @@
         var xmlHttp = new XMLHttpRequest();
         xmlHttp.open( "GET", "/stopVM" + "?vmNumber=" + "{{vmNumber}}", false ); // false for synchronous request
         xmlHttp.send(null);
+        if (xmlHttp.responseText == 'VM Stop')
+        {
+            runButton.textContent = "run";
+            runButton.onclick = runVM;
+        }
         return xmlHttp.responseText;
     }
 </script>

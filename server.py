@@ -12,7 +12,13 @@ vmPathList = []
 vncPorts = []
 vmNames = []
 
+vmrunPath = '' 
 
+#vmrun.exe has a different path based on if VMware is Workstation or Player
+if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
+    vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
+elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
+    vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
 
 #Checks for a specific line and gives everything that comes next to the given part of the string
 def CheckForSpecs(specString, txt):
@@ -79,9 +85,9 @@ def SearchVMsInFilePlayer(txt):
 
 
 @app.route("/")
-def listVMs():
+def main():
 
-    global cpuSpecs, RAMSpecs, biosType, vmPathList, vncPorts
+    global cpuSpecs, RAMSpecs, biosType, vmPathList, vncPorts, vmrunPath
 
     #Clearing the content of the arrays in case of a reload of the page since this are global arrays
     cpuSpecs.clear()
@@ -91,7 +97,9 @@ def listVMs():
     vncPorts.clear()
     vmList = ''
 
+
     #TODO: Do this in a decent way
+
 
     appDataPath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
     if os.path.exists(appDataPath):
@@ -112,7 +120,7 @@ def listVMs():
         txt = f.readlines()
 
         #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
-        coreNumber = CheckForSpecs( 'numvcpus = "', txt)
+        coreNumber = CheckForSpecs('numvcpus = "', txt)
         if coreNumber!=None:
             cpuSpecs.append(coreNumber)
         else:
@@ -139,26 +147,25 @@ def listVMs():
             vncPorts.append(None)
         f.close()
 
-    print(cpuSpecs, RAMSpecs, biosType, vmPathList, vncPorts)
     return render_template("list.html", vmList=vmList)
 
 
 @app.route("/specs.html")
 def specs():
-    global cpuSpecs, RAMSpecs, vncPorts
+    global cpuSpecs, RAMSpecs, vncPorts, vmrunPath
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
     isON = None
-    if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
+    #Checking if the VM is running based on the output of 'vmrun list'
+    print(vmrunPath)
+    if vmrunPath!='':
         isON = False
-        result = subprocess.run(['C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe' ,'list'], stdout=subprocess.PIPE)
+        result = subprocess.run([vmrunPath ,'list'], stdout=subprocess.PIPE)
         result = str(result.stdout)
         list = result.split('\\r\\n')
-        print(vmPathList)
-        for el in list:
-            el = el.encode().decode('unicode_escape')
-            print(el)
-            if el == vmPathList[x]:
+        for item in list:
+            item = item.encode().decode('unicode_escape') #get rid of // 
+            if item == vmPathList[x]:
                 isON = True
         
     return render_template("specs.html", cpuSpecs1=cpuSpecs[x], RAMSpecs1=RAMSpecs[x], biosType1=biosType[x], vmPath1=vmPathList[x], vmNumber=vmNumber, vncPort=vncPorts[x], vmName=vmNames[x], isON=str(isON))
@@ -167,14 +174,19 @@ def specs():
 def runVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
-    #TODO: VMware Player
-    os.system('""C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe" start "' + vmPathList[x] + '""')
-    return 'VM Run'
+    if vmrunPath != '':
+        subprocess.run([vmrunPath, 'start', vmPathList[x]])
+        return 'VM Run'
+    else:
+        return 'VM not run'
 
 @app.route("/stopVM")
 def stopVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
-    #TODO: VMware Player
-    os.system('""C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe" stop "' + vmPathList[x] + '""')
-    return 'VM Stop'
+    if vmrunPath != '':
+        print(vmrunPath)
+        subprocess.run([vmrunPath, 'stop', vmPathList[x]])
+        return 'VM Stop'
+    else:
+        return 'VM not Stop'
