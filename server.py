@@ -34,21 +34,7 @@ def GetSlicedVMXPath(path):
         slicedPath = slicedPath.replace('"\n', "")
     return slicedPath
 
-@app.route("/")
-def listVMs():
-
-    global cpuSpecs, RAMSpecs, biosType, vmPathList, vncPorts
-
-    #Clearing the content of the arrays in case of a reload of the page since this are global arrays
-    cpuSpecs.clear()
-    RAMSpecs.clear()
-    biosType.clear()
-    vmPathList.clear()
-    vncPorts.clear()
-
-    appDataPath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
-    f = open(appDataPath)
-    txt = f.readlines()
+def SearchVMsInFileWorkstation(txt):
     vmList = ''
     for line in txt:
         lineToSearch = '.config = "'
@@ -67,7 +53,57 @@ def listVMs():
                     i+=1
             vmList+=slicedLine[sliceIndex:]
             vmList+="    "
-    f.close()
+    
+    return vmList
+
+def SearchVMsInFilePlayer(txt):
+    vmList = ''
+    for line in txt:
+        lineToSearch = '.filename = "'
+        if lineToSearch in line:
+            vmPathList.append(GetSlicedVMXPath(line))
+            sliceIndex = 0
+            for match in re.finditer('.vmx', line):
+                vmxPosition = match.start()
+                slicedLine = line[:vmxPosition]
+                i = 0
+                for letter in slicedLine:
+                    if slicedLine[-i] == "\\":
+                        sliceIndex = -i
+                        break
+                    i+=1
+            vmList+=slicedLine[sliceIndex:]
+            vmList+="    "
+    
+    return vmList
+
+
+@app.route("/")
+def listVMs():
+
+    global cpuSpecs, RAMSpecs, biosType, vmPathList, vncPorts
+
+    #Clearing the content of the arrays in case of a reload of the page since this are global arrays
+    cpuSpecs.clear()
+    RAMSpecs.clear()
+    biosType.clear()
+    vmPathList.clear()
+    vncPorts.clear()
+    vmList = ''
+
+    appDataPath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
+    if os.path.exists(appDataPath):
+        f = open(appDataPath)
+        txt = f.readlines()
+        vmList+=SearchVMsInFileWorkstation(txt)
+        f.close()
+
+    appDataPath = os.getenv('APPDATA') + "\VMware\preferences.ini"
+    if os.path.exists(appDataPath):
+        f = open(appDataPath)
+        txt = f.readlines()
+        vmList+=SearchVMsInFilePlayer(txt)
+        f.close()
     
     for path in vmPathList:
         f = open(path)
@@ -110,21 +146,19 @@ def specs():
     global cpuSpecs, RAMSpecs, vncPorts
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
-    result = subprocess.run(['C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe' ,'list'], stdout=subprocess.PIPE)
-    result = str(result.stdout)
-    list = result.split('\\r\\n')
-    isON = False
-    print(vmPathList)
-    for el in list:
-        el = el.encode().decode('unicode_escape')
-        print(el)
-        if el == vmPathList[x]:
-            isON = True
-    
-    print(isON)
-
-    
-    
+    isON = None
+    if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
+        isON = False
+        result = subprocess.run(['C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe' ,'list'], stdout=subprocess.PIPE)
+        result = str(result.stdout)
+        list = result.split('\\r\\n')
+        print(vmPathList)
+        for el in list:
+            el = el.encode().decode('unicode_escape')
+            print(el)
+            if el == vmPathList[x]:
+                isON = True
+        
     return render_template("specs.html", cpuSpecs1=cpuSpecs[x], RAMSpecs1=RAMSpecs[x], biosType1=biosType[x], vmPath1=vmPathList[x], vmNumber=vmNumber, vncPort=vncPorts[x], vmName=vmNames[x], isON=str(isON))
 
 @app.route("/runVM")
