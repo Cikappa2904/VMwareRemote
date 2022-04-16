@@ -7,6 +7,7 @@ VMwareRemote (temporary name), is a tool written in Python that let's you see a 
 VMwareRemote DOES NOT let you remote control a running VM, for that you may want to use a VNC Client and the built in VNC Server of VMware Workstation.
 
 ## Roadmap 
+- [ ] Config File
 - [ ] Linux Support
 - [ ] GUI Installer
 - [ ] VM Creation
@@ -15,9 +16,10 @@ VMwareRemote DOES NOT let you remote control a running VM, for that you may want
 - [ ] Enabling VNC
 - [ ] Running VMware Player VMs
 - [ ] Decent look
+- [ ] Automatic Updater
 
 ## Compatibility
-- Host OS: Windows
+- Host OS: Windows (Linux support is coming)
 - VMware: Workstation 16, Player 16 (with limitation)
 
 ## How to run

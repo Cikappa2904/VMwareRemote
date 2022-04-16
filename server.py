@@ -91,6 +91,8 @@ def listVMs():
     vncPorts.clear()
     vmList = ''
 
+    #TODO: Do this in a decent way
+
     appDataPath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
     if os.path.exists(appDataPath):
         f = open(appDataPath)
@@ -165,6 +167,7 @@ def specs():
 def runVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
+    #TODO: VMware Player
     os.system('""C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe" start "' + vmPathList[x] + '""')
     return 'VM Run'
 
@@ -172,5 +175,6 @@ def runVM():
 def stopVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
+    #TODO: VMware Player
     os.system('""C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe" stop "' + vmPathList[x] + '""')
     return 'VM Stop'
