@@ -12,7 +12,7 @@
         <li>RAM: {{RAMSpecs1}} MB</li>
         <li>Firmware type: {{biosType1}}</li>
         <li>Host VM path: {{vmPath1}}</li>
-        <li>IsON: {{isON}}</li>
+        <li id = "isON_Label">IsON: {{isON}}</li>
     </ul>
     <button id="runVM">run</button>
 </body>
@@ -32,8 +32,6 @@
     {
         runButton.textContent = "Shutdown";
         runButton.onclick = stopVM;
-
-
     }
     else if(isON == "False")
     {
@@ -45,36 +43,50 @@
     }
 
 
-    function runVM(runButton)
+    function runVM()
     {
         var xmlHttp = new XMLHttpRequest();
         xmlHttp.open( "GET", "/runVM" + "?vmNumber=" + "{{vmNumber}}", true ); // false for synchronous request
-        xmlHttp.send(null);
-        xmlHttp.callback = function()
+        xmlHttp.onload = function (e) 
         {
-            console.log("ciao");
-            if (xmlHttp.responseText == 'VM Run')
+            if (xmlHttp.readyState === 4) 
             {
-                
-                runButton.textContent = "Shutdown";
-                runButton.onclick = stopVM;
+                if (xmlHttp.status === 200) 
+                {
+                    runButton.textContent = "Shutdown";
+                    runButton.onclick = stopVM;
+                    document.getElementById("isON_Label").textContent = "IsON: True";
+                }
+                else
+                {
+                    console.error(xhr.statusText);
+                }
             }
-        }
-        
-        
+        };
+        xmlHttp.send(null);
         return xmlHttp.responseText;
     }
     function stopVM()
     {
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", "/stopVM" + "?vmNumber=" + "{{vmNumber}}", false ); // false for synchronous request
-        xmlHttp.send(null);
-        if (xmlHttp.responseText == 'VM Stop')
+        xmlHttp.open( "GET", "/stopVM" + "?vmNumber=" + "{{vmNumber}}", true ); // false for synchronous request
+        xmlHttp.onload = function (e) 
         {
-            runButton.textContent = "run";
-            runButton.onclick = runVM;
-        }
-        return xmlHttp.responseText;
+            if (xmlHttp.readyState === 4) 
+            {
+                if (xmlHttp.status === 200) 
+                {
+                    runButton.textContent = "run";
+                    runButton.onclick = runVM;
+                    document.getElementById("isON_Label").textContent = "IsON: False";
+                }
+                else
+                {
+                    console.error(xhr.statusText);
+                }
+            }
+        };
+        xmlHttp.send(null);
     }
 </script>
 </html>
