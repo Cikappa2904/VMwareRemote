@@ -1,3 +1,4 @@
+from calendar import c
 from flask import Flask, render_template, request
 import re
 import os
@@ -190,3 +191,21 @@ def stopVM():
         return 'VM Stop'
     else:
         return 'VM not Stop'
+
+@app.route("/edit.html")
+def editPage():
+    vmNumber = request.args.get("vmNumber")
+    return render_template("edit.html", vmNumber=vmNumber)
+
+
+
+@app.route("/editVM", methods=['POST'])
+def editVM():
+    if request.method == 'POST':
+        vmNumber = request.form.get('vmNumber')
+        cpuCores = request.form.get('cpuCores')
+        ram = request.form.get('ram')
+        vncEnabled = request.form.get('vncEnabled')
+        print(vmNumber)
+        
+        return '<script>window.location.href = "/";</script>'

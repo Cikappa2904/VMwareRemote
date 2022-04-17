@@ -15,6 +15,7 @@
         <li id = "isON_Label">IsON: {{isON}}</li>
     </ul>
     <button id="runVM">run</button>
+    <button id="editVM">Edit</button>
 </body>
 <script>
     document.title = "{{vmName}}";
@@ -42,6 +43,12 @@
         runButton.style.display = "none";
     }
 
+
+    const editButton = document.getElementById("editVM");
+    editButton.onclick = function()
+    {
+        window.location.href = "/edit.html?vmNumber=" + "{{vmNumber}}";
+    };
 
     function runVM()
     {

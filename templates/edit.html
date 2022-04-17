@@ -7,12 +7,34 @@
     <title>EditVM</title>
 </head>
 <body>
-    <form action="">
+    <form method="post" action="/editVM" name="editForm">
         <!-- TODO: Get number of host CPU cores -->
         <label for="cpuCores">CPU Cores: </label><br>
         <input type="text" name="cpuCores" id="cpuCores"><br>
         <label for="cpuCores">RAM: </label><br>
         <input type="text" name="ram" id="ram"><br>
+        <label for="VNC">VNC Enabled:</label>
+        <input type="checkbox" name="VNC" id="VNC"> <br>
+        <input type="button" id="submitButton" value="Confirm">
     </form>
 </body>
+<script>
+    function addHidden(theForm, key, value) {
+        //copied from: https://stackoverflow.com/questions/9251301/how-to-add-a-new-hidden-input-fields-to-the-form-on-submit
+        // Create a hidden input element, and append it to the form:
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key; // 'the key/name of the attribute/field that is sent to the server
+        input.value = value;
+        theForm.appendChild(input);
+    }
+
+    const form = document.forms['editForm'];
+    addHidden(form, "vmNumber", "{{vmNumber}}");
+    const submitButton = document.getElementById("submitButton");
+    submitButton.onclick = function()
+    {
+        form.submit();
+    }
+</script>
 </html>
