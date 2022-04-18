@@ -1,4 +1,3 @@
-from calendar import c
 from flask import Flask, render_template, request
 import re
 import os
@@ -219,10 +218,18 @@ def editPage():
 @app.route("/editVM", methods=['POST'])
 def editVM():
     if request.method == 'POST':
-        vmNumber = request.form.get('vmNumber')
+        vmNumber = int(request.form.get('vmNumber'))
         cpuCores = request.form.get('cpuCores')
         ram = request.form.get('ram')
         vncEnabled = request.form.get('vncEnabled')
-        print(vmNumber)
-        
+        f = open(vmPathList[vmNumber], 'r')
+        txt = f.readlines()
+        for i in range(len(txt)):
+            if "numvcpus" in txt[i]:
+                txt[i] = 'numvcpus = "' + cpuCores + '"\n'
+        print(txt)
+        f.close()
+        f = open(vmPathList[vmNumber], 'w')
+        f.write(' '.join(line for line in txt))
+        f.close()
         return '<script>window.location.href = "/";</script>'
