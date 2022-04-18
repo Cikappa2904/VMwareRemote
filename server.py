@@ -3,6 +3,8 @@ from flask import Flask, render_template, request
 import re
 import os
 import subprocess
+import platform
+
 
 app = Flask(__name__)
 
@@ -16,7 +18,9 @@ vmNames = []
 vmrunPath = '' 
 
 #vmrun.exe has a different path based on if VMware is Workstation or Player
-if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
+if 'Linux' in platform.uname():
+    vmrunPath = 'vmrun'
+elif os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
     vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
 elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
     vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
@@ -54,7 +58,7 @@ def SearchVMsInFileWorkstation(txt):
                 slicedLine = line[:vmxPosition]
                 i = 0
                 for letter in slicedLine:
-                    if slicedLine[-i] == "\\":
+                    if slicedLine[-i] == "\\" or slicedLine[-i] == "/":
                         sliceIndex = -i
                         break
                     i+=1
@@ -75,7 +79,7 @@ def SearchVMsInFilePlayer(txt):
                 slicedLine = line[:vmxPosition]
                 i = 0
                 for letter in slicedLine:
-                    if slicedLine[-i] == "\\":
+                    if slicedLine[-i] == "\\"  or slicedLine[-i] == "/":
                         sliceIndex = -i
                         break
                     i+=1
@@ -102,16 +106,29 @@ def main():
     #TODO: Do this in a decent way
 
 
-    appDataPath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
-    if os.path.exists(appDataPath):
-        f = open(appDataPath)
+    #VMware Workstation
+    if platform.system() == 'Windows':
+        filePath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
+    elif 'Linux' in platform.uname():
+        filePath = os.path.expanduser('~') + '/.vmware/inventory.vmls'
+
+
+    if os.path.exists(filePath):
+        f = open(filePath)
         txt = f.readlines()
         vmList+=SearchVMsInFileWorkstation(txt)
         f.close()
 
-    appDataPath = os.getenv('APPDATA') + "\VMware\preferences.ini"
-    if os.path.exists(appDataPath):
-        f = open(appDataPath)
+
+    #VMware Player
+
+    if platform.system() == 'Windows':
+        filePath = os.getenv('APPDATA') + "\VMware\preferences.ini"
+    elif 'Linux' in platform.uname():
+        filePath = os.path.expanduser('~') + '/.vmware/preferences.ini'
+
+    if os.path.exists(filePath):
+        f = open(filePath)
         txt = f.readlines()
         vmList+=SearchVMsInFilePlayer(txt)
         f.close()
@@ -176,7 +193,7 @@ def runVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
     if vmrunPath != '':
-        subprocess.run([vmrunPath, 'start', vmPathList[x]])
+        subprocess.run([vmrunPath, '-T', 'ws', 'start', vmPathList[x]])
         return 'VM Run'
     else:
         return 'VM not run'
@@ -187,7 +204,7 @@ def stopVM():
     x = int(vmNumber)
     if vmrunPath != '':
         print(vmrunPath)
-        subprocess.run([vmrunPath, 'stop', vmPathList[x]])
+        subprocess.run([vmrunPath, '-T', 'ws', 'stop', vmPathList[x]])
         return 'VM Stop'
     else:
         return 'VM not Stop'
