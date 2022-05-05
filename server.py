@@ -152,6 +152,7 @@ def main():
             biosType.append('efi')
         else:
             biosType.append('legacy')
+        #TODO FIX: for whatever reason i had a .vmx with spaces at the begininng of lines and was giving problems
 
         #VMware .vmx files don't have the 'RemoteDisplay.vnc.port =' line when using the default port 5900
         vncPort = CheckForSpecs('RemoteDisplay.vnc.port = "', txt)
@@ -174,7 +175,7 @@ def specs():
     x = int(vmNumber)
     isON = None
     #Checking if the VM is running based on the output of 'vmrun list'
-    print(vmrunPath)
+    #print(vmrunPath)
     if vmrunPath!='':
         isON = False
         result = subprocess.run([vmrunPath ,'list'], stdout=subprocess.PIPE)
@@ -227,7 +228,7 @@ def editVM():
         for i in range(len(txt)):
             if "numvcpus" in txt[i]:
                 txt[i] = 'numvcpus = "' + cpuCores + '"\n'
-        print(txt)
+        #print(txt)
         f.close()
         f = open(vmPathList[vmNumber], 'w')
         f.write(' '.join(line for line in txt))
