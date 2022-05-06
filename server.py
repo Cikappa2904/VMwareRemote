@@ -28,6 +28,8 @@ elif 'Windows' in platform.uname():
         vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
     elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
         vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
+else:
+    raise Exception("Platform not supported: " + platform.uname())
 
 maxRAMSize = OSSpecsCheck.maxRAM()
 
@@ -109,7 +111,6 @@ def main():
     vmList = ''
 
 
-    #TODO: Do this in a decent way
 
 
     #VMware Workstation
@@ -128,9 +129,9 @@ def main():
 
     #VMware Player
 
-    if platform.system() == 'Windows':
+    if hostOS == 'Windows':
         filePath = os.getenv('APPDATA') + "\VMware\preferences.ini"
-    elif 'Linux' in platform.uname():
+    elif hostOS == 'Linux':
         filePath = os.path.expanduser('~') + '/.vmware/preferences.ini'
 
     if os.path.exists(filePath):
@@ -159,7 +160,6 @@ def main():
             biosType.append('efi')
         else:
             biosType.append('legacy')
-        #TODO FIX: for whatever reason i had a .vmx with spaces at the begininng of lines and was giving problems
 
         #VMware .vmx files don't have the 'RemoteDisplay.vnc.port =' line when using the default port 5900
         vncPort = CheckForSpecs('RemoteDisplay.vnc.port = "', txt)
@@ -219,7 +219,8 @@ def stopVM():
 @app.route("/edit.html")
 def editPage():
     vmNumber = request.args.get("vmNumber")
-    return render_template("edit.html", vmNumber=vmNumber)
+    x = int(vmNumber)
+    return render_template("edit.html", vmNumber=vmNumber, hostCPUCores = os.cpu_count(), hostRAM = maxRAMSize)
 
 
 
@@ -227,22 +228,29 @@ def editPage():
 def editVM():
     if request.method == 'POST':
         vmNumber = int(request.form.get('vmNumber'))
-        #TODO: check if parameters are numbers
+
         cpuCores = request.form.get('cpuCores')
+        if not cpuCores.isnumeric(): raise TypeError("cpuCores needs to be an int")
+
         ram = request.form.get('ram')
+        if not ram.isnumeric(): raise TypeError("ram needs to be an int")
+        
         vncEnabled = request.form.get('VNC')
         vncPort = request.form.get('VNCPort')
-        print(vncEnabled)
+        if not vncPort.isnumeric(): raise TypeError("vncPort needs to be an int")
+
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
+
         trovatoEnabled = False
         trovatoPort = False
+
         for i in range(len(txt)):
             if "numvcpus" in txt[i]:
-                if int(cpuCores)>os.cpu_count():
+                if int(cpuCores)>os.cpu_count(): #Limiting the CPU cores assigned to the VM to the limit of cores in the host system
                     cpuCores = os.cpu_count()
                 txt[i] = 'numvcpus = "' + str(cpuCores) + '"\n'
-            if "memsize" in txt[i]:
+            if "memsize" in txt[i]: #Limiting the RAM assigned to the VM to the RAM in the host system
                 if int(ram)>maxRAMSize:
                     ram = maxRAMSize
                 txt[i] = 'memsize = "' + str(ram) + '"\n'
@@ -258,12 +266,14 @@ def editVM():
             else:
                 if 'RemoteDisplay.vnc.enabled = "TRUE"' in txt[i]:
                     txt[i]=''
-                    print(txt)
-        if vncEnabled == 'on' and not trovatoEnabled:
-            txt.append('RemoteDisplay.vnc.enabled = "TRUE"\n')
-        if vncEnabled == 'on' and not trovatoPort and vncPort != '5900':
-            txt.append('RemoteDisplay.vnc.port = "' + vncPort + '"\n')
+
+        if vncEnabled == 'on':
+            if not trovatoEnabled:
+                txt.append('RemoteDisplay.vnc.enabled = "TRUE"\n')
+            if not trovatoPort and vncPort != '5900':
+                txt.append('RemoteDisplay.vnc.port = "' + vncPort + '"\n')
         f.close()
+
         f = open(vmPathList[vmNumber], 'w')
         f.write(''.join(line for line in txt))
         f.close()

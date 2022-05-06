@@ -8,15 +8,15 @@
 </head>
 <body>
     <form method="post" action="/editVM" name="editForm">
-        <!-- TODO: Get number of host CPU cores -->
+        <!-- TODO: Check for letters and symbols -->
         <label for="cpuCores">CPU Cores: </label><br>
-        <input type="text" name="cpuCores" id="cpuCores"><br>
+        <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
         <label for="cpuCores">RAM: </label><br>
-        <input type="text" name="ram" id="ram"><br>
+        <input type="number" onKeyDown='checkMAXValue(this, "{{hostRAM}}" )' min="4" max="{{hostRAM}}" value="1024" name="ram" id="ram"><br>
         <label for="VNC">VNC Enabled:</label>
         <input type="checkbox" name="VNC" id="VNC" onclick='checkVNC(this);'> <br>
         <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
-        <input type="text" name="VNCPort" id="VNCPort" style="display:none">
+        <input type="number" value="5900" name="VNCPort" id="VNCPort" style="display:none">
         <input type="button" id="submitButton" value="Confirm">
     </form>
 </body>
@@ -45,7 +45,13 @@
             document.getElementById("VNCPortLabel").style.display = "none";
         }
     }
-
+    function checkMAXValue(obj, value)
+    {
+        if(parseInt(obj.value)>parseInt(value))
+        {
+            obj.value = value;
+        }
+    }
     addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
     const submitButton = document.getElementById("submitButton");
     submitButton.onclick = function()

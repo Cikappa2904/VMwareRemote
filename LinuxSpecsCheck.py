@@ -4,5 +4,5 @@ import psutil
 
 #return the size (in MiB) of the installed RAM in a Windows-based system
 def maxRAM():
-    return (psutil.virtual_memory().total)/1048576
+    return int((psutil.virtual_memory().total)/1048576)
 
