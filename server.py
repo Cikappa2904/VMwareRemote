@@ -3,7 +3,7 @@ import re
 import os
 import subprocess
 import platform
-
+import hostSpecsCheck
 
 app = Flask(__name__)
 
@@ -16,13 +16,19 @@ vmNames = []
 
 vmrunPath = '' 
 
-#vmrun.exe has a different path based on if VMware is Workstation or Player
 if 'Linux' in platform.uname():
+    hostOS = 'Linux'
     vmrunPath = 'vmrun'
-elif os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
-    vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
-elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
-    vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
+elif 'Windows' in platform.uname():
+    hostOS = 'Windows' #Setting this variable here so calling functions is not needed again later in the program
+    #TODO: same thing but in Linux (check max RAM)
+    maxRAMSize = hostSpecsCheck.maxRAMWindows()
+
+    #vmrun.exe has a different path based on if VMware is Workstation or Player
+    if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
+        vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
+    elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
+        vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
 
 #Checks for a specific line and gives everything that comes next to the given part of the string
 def CheckForSpecs(specString, txt):
@@ -220,17 +226,24 @@ def editPage():
 def editVM():
     if request.method == 'POST':
         vmNumber = int(request.form.get('vmNumber'))
+        #TODO: check if parameters are numbers
         cpuCores = request.form.get('cpuCores')
         ram = request.form.get('ram')
         vncEnabled = request.form.get('vncEnabled')
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
+        print(txt)
         for i in range(len(txt)):
             if "numvcpus" in txt[i]:
-                txt[i] = 'numvcpus = "' + cpuCores + '"\n'
-        #print(txt)
+                if int(cpuCores)>os.cpu_count():
+                    cpuCores = os.cpu_count()
+                txt[i] = 'numvcpus = "' + str(cpuCores) + '"\n'
+            if "memsize" in txt[i]:
+                if int(ram)>maxRAMSize:
+                    ram = maxRAMSize
+                txt[i] = 'memsize = "' + str(ram) + '"\n'
         f.close()
         f = open(vmPathList[vmNumber], 'w')
-        f.write(' '.join(line for line in txt))
+        f.write(''.join(line for line in txt))
         f.close()
         return '<script>window.location.href = "/";</script>'
