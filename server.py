@@ -229,10 +229,11 @@ def editVM():
         #TODO: check if parameters are numbers
         cpuCores = request.form.get('cpuCores')
         ram = request.form.get('ram')
-        vncEnabled = request.form.get('vncEnabled')
+        vncEnabled = request.form.get('VNC')
+        vncPort = request.form.get('VNCPort')
+        print(vncEnabled)
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
-        print(txt)
         for i in range(len(txt)):
             if "numvcpus" in txt[i]:
                 if int(cpuCores)>os.cpu_count():
@@ -242,6 +243,14 @@ def editVM():
                 if int(ram)>maxRAMSize:
                     ram = maxRAMSize
                 txt[i] = 'memsize = "' + str(ram) + '"\n'
+            #TODO: Check if .vmx syntax for this makes sense as I don't have VMware Pro right now
+            if "RemoteDisplay.vnc.enabled = " in txt:
+                if "RemoteDisplay.vnc.enabled = " in txt[i]:
+                    txt[i] = "RemoteDisplay.vnc.enabled = TRUE"
+                if vncPort != '5900':
+                    if "RemoteDisplay.vnc.port" in txt:
+                        if "RemoteDisplay.vnc.port" in txt[i]:
+                            txt[i] = 'RemoteDisplay.vnc.port = ' + vncPort + '"\n'
         f.close()
         f = open(vmPathList[vmNumber], 'w')
         f.write(''.join(line for line in txt))

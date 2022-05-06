@@ -14,7 +14,9 @@
         <label for="cpuCores">RAM: </label><br>
         <input type="text" name="ram" id="ram"><br>
         <label for="VNC">VNC Enabled:</label>
-        <input type="checkbox" name="VNC" id="VNC"> <br>
+        <input type="checkbox" name="VNC" id="VNC" onclick='checkVNC(this);'> <br>
+        <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
+        <input type="text" name="VNCPort" id="VNCPort" style="display:none">
         <input type="button" id="submitButton" value="Confirm">
     </form>
 </body>
@@ -30,7 +32,21 @@
     }
 
     const form = document.forms['editForm'];
-    addHidden(form, "vmNumber", "{{vmNumber}}");
+    function checkVNC(checkbox)
+    {
+        if(checkbox.checked) 
+        {
+            document.getElementById("VNCPort").style.display = "block";
+            document.getElementById("VNCPortLabel").style.display = "block";
+        }
+        else
+        {
+            document.getElementById("VNCPort").style.display = "none";
+            document.getElementById("VNCPortLabel").style.display = "none";
+        }
+    }
+
+    addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
     const submitButton = document.getElementById("submitButton");
     submitButton.onclick = function()
     {
