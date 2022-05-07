@@ -1,1 +1,2 @@
 $env:FLASK_APP = "server"
+export FLASK_APP=server

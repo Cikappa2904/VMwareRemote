@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EditVM</title>
+</head>
+<body>
+    <form method="post" action="/editVM" name="editForm">
+        <!-- TODO: Check for letters and symbols -->
+        <label for="cpuCores">CPU Cores: </label><br>
+        <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
+        <label for="cpuCores">RAM: </label><br>
+        <input type="number" onKeyDown='checkMAXValue(this, "{{hostRAM}}" )' min="4" max="{{hostRAM}}" value="1024" name="ram" id="ram"><br>
+        <label for="VNC">VNC Enabled:</label>
+        <input type="checkbox" name="VNC" id="VNC" onclick='checkVNC(this);'> <br>
+        <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
+        <input type="number" value="5900" name="VNCPort" id="VNCPort" style="display:none">
+        <input type="button" id="submitButton" value="Confirm">
+    </form>
+</body>
+<script>
+    function addHidden(theForm, key, value) {
+        //copied from: https://stackoverflow.com/questions/9251301/how-to-add-a-new-hidden-input-fields-to-the-form-on-submit
+        // Create a hidden input element, and append it to the form:
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key; // 'the key/name of the attribute/field that is sent to the server
+        input.value = value;
+        theForm.appendChild(input);
+    }
+
+    const form = document.forms['editForm'];
+    function checkVNC(checkbox)
+    {
+        if(checkbox.checked) 
+        {
+            document.getElementById("VNCPort").style.display = "block";
+            document.getElementById("VNCPortLabel").style.display = "block";
+        }
+        else
+        {
+            document.getElementById("VNCPort").style.display = "none";
+            document.getElementById("VNCPortLabel").style.display = "none";
+        }
+    }
+    function checkMAXValue(obj, value)
+    {
+        if(parseInt(obj.value)>parseInt(value))
+        {
+            obj.value = value;
+        }
+    }
+    addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
+    const submitButton = document.getElementById("submitButton");
+    submitButton.onclick = function()
+    {
+        form.submit();
+    }
+</script>
+</html>
