@@ -8,18 +8,18 @@ VMwareRemote DOES NOT let you remote control a running VM, for that you may want
 
 ## Roadmap 
 - [ ] Config File
-- [ ] Linux Support
+- [X] Linux Support
 - [ ] GUI Installer
 - [ ] VM Creation
 - [ ] VM Cloning
-- [ ] VM Editing
-- [ ] Enabling VNC
+- [X] VM Editing
+- [X] Enabling VNC
 - [X] Running VMware Player VMs
 - [ ] Decent look
 - [ ] Automatic Updater
 
 ## Compatibility
-- Host OS: Windows (Linux support is coming)
+- Host OS: Windows, Linux
 - VMware: Workstation 16, Player 16 (with limitation)
 
 ## How to run
@@ -29,8 +29,14 @@ In a terminal (CMD or PowerShell) tyoe:
 pip install flask
 ```
 Open a terminal in the folder you clone the repo into and run this 2 commands:
+### Windows
 ```powershell
 $env:FLASK_APP = "server"
+flask run
+```
+### Linux
+```bash
+export FLASK_APP=server
 flask run
 ```
 Sometimes **flask run** may not work so try:
