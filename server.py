@@ -1,10 +1,25 @@
+from http.client import NETWORK_AUTHENTICATION_REQUIRED
 from flask import Flask, render_template, request
 import re
 import os
 import subprocess
 import platform
+import errno
 
 app = Flask(__name__)
+
+class VirtualMachine:
+    def __init__(self, cpuCores, ram, bios, vncEnabled, vncPort, vmName, vmPath, exists):
+        self.cpuCores = cpuCores
+        self.ram = ram
+        self.bios = bios
+        self.vncEnabled = vncEnabled
+        self.vncPort = vncPort
+        self.vmName = vmName
+        self.vmPath = vmPath
+        self.exists = exists
+    def __repr__(self): 
+        return str(self.cpuCores) + ' ' + str(self.ram) + ' ' + self.bios + ' ' + str(self.vncEnabled) + ' ' + str(self.vncPort) + ' ' + self.vmName + ' ' + self.vmPath + ' ' 
 
 cpuSpecs = []
 RAMSpecs = []
@@ -12,7 +27,10 @@ biosType = []
 vmPathList = []
 vncPorts = []
 vmNames = []
+vmList = []
+vmArray = []
 
+#TODO: add networking back
 vmrunPath = '' 
 
 if 'Linux' in platform.uname():
@@ -100,16 +118,11 @@ def SearchVMsInFilePlayer(txt):
 @app.route("/")
 def main():
 
-    global cpuSpecs, RAMSpecs, biosType, vmPathList, vncPorts, vmrunPath
+    global vmPathList, vmrunPath, vmArray
 
     #Clearing the content of the arrays in case of a reload of the page since this are global arrays
-    cpuSpecs.clear()
-    RAMSpecs.clear()
-    biosType.clear()
     vmPathList.clear()
-    vncPorts.clear()
     vmList = ''
-
 
 
 
@@ -141,43 +154,47 @@ def main():
         f.close()
     
     for path in vmPathList:
-        f = open(path)
-        txt = f.readlines()
+        if os.path.exists(path):
+            f = open(path)
+            txt = f.readlines()
 
-        #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
-        coreNumber = CheckForSpecs('numvcpus = "', txt)
-        if coreNumber!=None:
-            cpuSpecs.append(coreNumber)
+            #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
+            coreNumber = CheckForSpecs('numvcpus = "', txt)
+            if coreNumber == None: coreNumber = '1'
+
+            ramSize = CheckForSpecs('memsize = "', txt)
+            vmName = CheckForSpecs('displayName = "', txt)
+
+            #VMware .vmx files don't have the 'firmware=' line when the VM is legacy, so we say the VM is legacy when we don't find that line
+            isEFI = True if CheckForSpecs('firmware = "', txt) == 'efi' else False
+
+            #VMware .vmx files don't have the 'RemoteDisplay.vnc.port =' line when using the default port 5900
+            vncPort = CheckForSpecs('RemoteDisplay.vnc.port = "', txt)
+            if CheckForSpecs('RemoteDisplay.vnc.enabled = "', txt) == 'TRUE':
+                vncEnabled = True
+                if vncPort == None:
+                    vncPort = '5900'
+            else:
+                vncEnabled = False
+                vncPort = None
+            tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True)
+            vmArray.append(tempVM)
+            del tempVM
+            f.close()
         else:
-            cpuSpecs.append('1')
-
-        RAMSpecs.append(CheckForSpecs('memsize = "', txt))
-        vmNames.append(CheckForSpecs('displayName = "', txt))
-
-        #VMware .vmx files don't have the 'firmware=' line when the VM is legacy, so we say the VM is legacy when we don't find that line
-        isEFI = CheckForSpecs('firmware = "', txt)
-        if isEFI=='efi':
-            biosType.append('efi')
-        else:
-            biosType.append('legacy')
-
-        #VMware .vmx files don't have the 'RemoteDisplay.vnc.port =' line when using the default port 5900
-        vncPort = CheckForSpecs('RemoteDisplay.vnc.port = "', txt)
-        if CheckForSpecs('RemoteDisplay.vnc.enabled = "', txt) == 'TRUE':
-            if vncPort == None:
-                vncPorts.append('5900')
-            elif vncPorts != None:
-                vncPorts.append(vncPort)
-        else:
-            vncPorts.append(None)
-        f.close()
-
+            tempVM = VirtualMachine('1','1024',True,False,'5900','',path,False) #Creating a fake VM because the actual one doesn't exist
+            vmArray.append(tempVM)
+            del tempVM
+            f.close()
+    
+    #print(vmArray)
     return render_template("list.html", vmList=vmList)
 
 
 @app.route("/specs.html")
 def specs():
-    global cpuSpecs, RAMSpecs, vncPorts, vmrunPath
+    #global cpuSpecs, RAMSpecs, vncPorts, vmrunPath
+    global vmArray
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
     isON = None
@@ -193,7 +210,7 @@ def specs():
             if item == vmPathList[x]:
                 isON = True
         
-    return render_template("specs.html", cpuSpecs1=cpuSpecs[x], RAMSpecs1=RAMSpecs[x], biosType1=biosType[x], vmPath1=vmPathList[x], vmNumber=vmNumber, vncPort=vncPorts[x], vmName=vmNames[x], isON=str(isON))
+    return render_template("specs.html", cpuSpecs1=vmArray[x].cpuCores, RAMSpecs1=vmArray[x].ram, biosType1=vmArray[x].bios, vmPath1=vmPathList[x], vmNumber=vmNumber, vncPort=vmArray[x].vncPort, vmName=vmArray[x].vmName, isON=str(isON), exists=vmArray[x].exists)
 
 @app.route("/runVM")
 def runVM():
@@ -266,6 +283,8 @@ def editVM():
             else:
                 if 'RemoteDisplay.vnc.enabled = "TRUE"' in txt[i]:
                     txt[i]=''
+                elif 'RemoteDisplay.vnc.port =' in txt[i]:
+                    txt[i]=''
 
         if vncEnabled == 'on':
             if not trovatoEnabled:
@@ -278,3 +297,7 @@ def editVM():
         f.write(''.join(line for line in txt))
         f.close()
         return '<script>window.location.href = "/";</script>'
+
+@app.route("/notFound.html")
+def notFound():
+    return render_template("notFound.html", vmPath=request.args.get('vmPath')) 

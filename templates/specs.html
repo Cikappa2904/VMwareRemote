@@ -5,6 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+<script>
+    document.title = "{{vmName}}";
+    if ("{{exists}}" == "False")
+    {
+        window.location.href = "/notFound.html?vmPath=" + "{{vmPath1}}";
+    }
+</script>
 <body>
     
     <ul id="specsUL">
@@ -18,7 +25,7 @@
     <button id="editVM">Edit</button>
 </body>
 <script>
-    document.title = "{{vmName}}";
+    
     const specsUL = document.getElementById("specsUL");
     let li = document.createElement("li");
     if("{{vncPort}}"!="None")

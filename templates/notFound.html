@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Found</title>
+</head>
+<body>
+    <h1>The VM you tried to open was not found.</h1>
+    <h3>Please check if you have moved or renamed the folder containing it.</h2>
+</body>
+<script>
+    //Code taken from: https://stackoverflow.com/questions/979975/get-the-values-from-the-get-parameters-javascript
+    var url_string = window.location.href; 
+    var url = new URL(url_string);
+    var c = url.searchParams.get("vmPath");
+    document.body.appendChild(document.createTextNode("Path: {{vmPath}}"));
+
+</script>
+</html>
