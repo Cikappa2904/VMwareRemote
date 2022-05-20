@@ -22,12 +22,18 @@ VMwareRemote DOES NOT let you remote control a running VM, for that you may want
 - Host OS: Windows, Linux
 - VMware: Workstation 16, Player 16 (with limitation)
 
-## How to run
+# How to run
 Install Python (either from the MS Store or from the official website) and Pip.\
-In a terminal (CMD or PowerShell) tyoe:
+In a terminal (CMD or PowerShell) type:
 ```powershell
 pip install flask
 ```
+## 1. Using shell script
+### **Run start.bat/start.sh from the copied folder**
+` `
+` `
+
+## 2. Using terminal
 Open a terminal in the folder you clone the repo into and run this 2 commands:
 ### Windows
 ```powershell

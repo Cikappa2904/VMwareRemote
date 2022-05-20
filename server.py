@@ -1,4 +1,3 @@
-from http.client import NETWORK_AUTHENTICATION_REQUIRED
 from flask import Flask, render_template, request
 import re
 import os
@@ -9,7 +8,7 @@ import errno
 app = Flask(__name__)
 
 class VirtualMachine:
-    def __init__(self, cpuCores, ram, bios, vncEnabled, vncPort, vmName, vmPath, exists):
+    def __init__(self, cpuCores: str, ram: str, bios: bool, vncEnabled: bool, vncPort: str, vmName: str, vmPath: str, exists: bool) -> None:
         self.cpuCores = cpuCores
         self.ram = ram
         self.bios = bios
@@ -18,20 +17,20 @@ class VirtualMachine:
         self.vmName = vmName
         self.vmPath = vmPath
         self.exists = exists
-    def __repr__(self): 
+    def __repr__(self) ->str: 
         return str(self.cpuCores) + ' ' + str(self.ram) + ' ' + self.bios + ' ' + str(self.vncEnabled) + ' ' + str(self.vncPort) + ' ' + self.vmName + ' ' + self.vmPath + ' ' 
 
-cpuSpecs = []
-RAMSpecs = []
-biosType = []
+# cpuSpecs = []
+# RAMSpecs = []
+# biosType = []
 vmPathList = []
-vncPorts = []
-vmNames = []
+# vncPorts = []
+# vmNames = []
 vmList = []
 vmArray = []
 
 #TODO: add networking back
-vmrunPath = '' 
+vmrunPath = ''
 
 if 'Linux' in platform.uname():
     import LinuxSpecsCheck as OSSpecsCheck
@@ -44,15 +43,17 @@ elif 'Windows' in platform.uname():
     #vmrun.exe has a different path based on if VMware is Workstation or Player
     if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
         vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
+        isWorkstation = True
     elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
         vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
+        isWorkstation = False
 else:
     raise Exception("Platform not supported: " + platform.uname())
 
 maxRAMSize = OSSpecsCheck.maxRAM()
 
 #Checks for a specific line and gives everything that comes next to the given part of the string
-def CheckForSpecs(specString, txt):
+def CheckForSpecs(specString: str, txt: str) -> str:
     for line in txt:
         vmSpec = ''
         if specString in line:
@@ -64,14 +65,14 @@ def CheckForSpecs(specString, txt):
                     break
             return vmSpec
 
-def GetSlicedVMXPath(path):
+def GetSlicedVMXPath(path: str) -> str:
     for match in re.finditer(' = "', path):
         slicePosition = match.end()
         slicedPath = path[slicePosition:]
         slicedPath = slicedPath.replace('"\n', "")
     return slicedPath
 
-def SearchVMsInFileWorkstation(txt):
+def SearchVMsInFileWorkstation(txt: str)->list:
     vmList = ''
     for line in txt:
         lineToSearch = '.config = "'
@@ -93,7 +94,7 @@ def SearchVMsInFileWorkstation(txt):
     
     return vmList
 
-def SearchVMsInFilePlayer(txt):
+def SearchVMsInFilePlayer(txt: str) -> list:
     vmList = ''
     for line in txt:
         lineToSearch = '.filename = "'
@@ -124,12 +125,10 @@ def main():
     vmPathList.clear()
     vmList = ''
 
-
-
     #VMware Workstation
-    if platform.system() == 'Windows':
+    if hostOS == 'Windows':
         filePath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
-    elif 'Linux' in platform.uname():
+    elif hostOS == 'Linux':
         filePath = os.path.expanduser('~') + '/.vmware/inventory.vmls'
 
 
@@ -193,7 +192,6 @@ def main():
 
 @app.route("/specs.html")
 def specs():
-    #global cpuSpecs, RAMSpecs, vncPorts, vmrunPath
     global vmArray
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
@@ -217,7 +215,10 @@ def runVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
     if vmrunPath != '':
-        subprocess.run([vmrunPath, '-T', 'ws', 'start', vmPathList[x]])
+        if isWorkstation:
+            subprocess.run([vmrunPath, '-T', 'ws', 'start', vmPathList[x]])
+        else:
+            subprocess.run([vmrunPath, '-T', 'player', 'start', vmPathList[x]])
         return 'VM Run'
     else:
         return 'VM not run'
@@ -301,3 +302,6 @@ def editVM():
 @app.route("/notFound.html")
 def notFound():
     return render_template("notFound.html", vmPath=request.args.get('vmPath')) 
+
+if __name__ == "__main__":
+    app.run()
