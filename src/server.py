@@ -3,41 +3,23 @@ import re
 import os
 import subprocess
 import platform
-import errno
+from modules.networkAdapter import NetworkAdapter
+from modules.virtualMachine import VirtualMachine
 
 app = Flask(__name__)
 
-class VirtualMachine:
-    def __init__(self, cpuCores: str, ram: str, bios: bool, vncEnabled: bool, vncPort: str, vmName: str, vmPath: str, exists: bool) -> None:
-        self.cpuCores = cpuCores
-        self.ram = ram
-        self.bios = bios
-        self.vncEnabled = vncEnabled
-        self.vncPort = vncPort
-        self.vmName = vmName
-        self.vmPath = vmPath
-        self.exists = exists
-    def __repr__(self) ->str: 
-        return str(self.cpuCores) + ' ' + str(self.ram) + ' ' + self.bios + ' ' + str(self.vncEnabled) + ' ' + str(self.vncPort) + ' ' + self.vmName + ' ' + self.vmPath + ' ' 
-
-# cpuSpecs = []
-# RAMSpecs = []
-# biosType = []
 vmPathList = []
-# vncPorts = []
-# vmNames = []
 vmList = []
 vmArray = []
 
 #TODO: add networking back
-vmrunPath = ''
 
 if 'Linux' in platform.uname():
-    import LinuxSpecsCheck as OSSpecsCheck
+    import modules.LinuxSpecsCheck as OSSpecsCheck
     hostOS = 'Linux'
     vmrunPath = 'vmrun'
 elif 'Windows' in platform.uname():
-    import WindowsSpecsCheck as OSSpecsCheck
+    import modules.WindowsSpecsCheck as OSSpecsCheck
     hostOS = 'Windows' #Setting this variable here so calling functions is not needed again later in the program
 
     #vmrun.exe has a different path based on if VMware is Workstation or Player
@@ -124,6 +106,7 @@ def main():
     #Clearing the content of the arrays in case of a reload of the page since this are global arrays
     vmPathList.clear()
     vmList = ''
+    vmArray.clear()
 
     #VMware Workstation
     if hostOS == 'Windows':
@@ -176,6 +159,11 @@ def main():
             else:
                 vncEnabled = False
                 vncPort = None
+            networkList = set()
+            for line in txt:
+                if "ethernet" in line:
+                    networkList.add(line[0:9])
+            print(networkList)
             tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True)
             vmArray.append(tempVM)
             del tempVM
@@ -197,7 +185,6 @@ def specs():
     x = int(vmNumber)
     isON = None
     #Checking if the VM is running based on the output of 'vmrun list'
-    #print(vmrunPath)
     if vmrunPath!='':
         isON = False
         result = subprocess.run([vmrunPath ,'list'], stdout=subprocess.PIPE)

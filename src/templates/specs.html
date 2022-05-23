@@ -17,7 +17,7 @@
     <ul id="specsUL">
         <li>CPU Cores: {{cpuSpecs1}}</li>
         <li>RAM: {{RAMSpecs1}} MB</li>
-        <li>Firmware type: {{biosType1}}</li>
+        <li id="firmwareLabel">Firmware type: {{biosType1}}</li>
         <li>Host VM path: {{vmPath1}}</li>
         <li id = "isON_Label">IsON: {{isON}}</li>
     </ul>
@@ -49,7 +49,9 @@
     {
         runButton.style.display = "none";
     }
-
+    const firmwareLabel = document.getElementById("firmwareLabel");
+    if("{{biosType1}}" == "True") firmwareLabel.textContent = "Firmware type: EFI";
+    else firmwareLabel.textContent = "Firmware type: BIOS";
 
     const editButton = document.getElementById("editVM");
     editButton.onclick = function()
