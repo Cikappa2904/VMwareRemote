@@ -1,6 +1,6 @@
 from .networkAdapter import *
 class VirtualMachine:
-    def __init__(self, cpuCores: str, ram: str, bios: bool, vncEnabled: bool, vncPort: str, vmName: str, vmPath: str, exists: bool, network: NetworkAdapter) -> None:
+    def __init__(self, cpuCores: str, ram: str, bios: bool, vncEnabled: bool, vncPort: str, vmName: str, vmPath: str, exists: bool, network: list) -> None:
         self.cpuCores = cpuCores
         self.ram = ram
         self.bios = bios

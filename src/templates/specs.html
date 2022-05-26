@@ -15,40 +15,66 @@
 <body>
     
     <ul id="specsUL">
-        <li>CPU Cores: {{cpuSpecs1}}</li>
-        <li>RAM: {{RAMSpecs1}} MB</li>
-        <li id="firmwareLabel">Firmware type: {{biosType1}}</li>
-        <li>Host VM path: {{vmPath1}}</li>
-        <li id = "isON_Label">IsON: {{isON}}</li>
+        <li id="cpuSpecs"></li>
+        <li id="ramSpecs"></li>
+        <li id="firmwareLabel"></li>
+        <li id="hostPath"></li>
+        <li id = "isON"></li>
     </ul>
     <button id="runVM">run</button>
     <button id="editVM">Edit</button>
 </body>
 <script>
     
-    const specsUL = document.getElementById("specsUL");
-    let li = document.createElement("li");
-    if("{{vncPort}}"!="None")
+    //get JSON (https://stackoverflow.com/questions/12460378/how-to-get-json-from-url-in-javascript)
+    let url = '/spec?vmNumber=' + "{{vmNumber}}";
+    var obj;
+    fetch(url)
+    .then(res => res.json())
+    .then(out => obj = out)
+    .then(function(obj)
     {
-        li.appendChild(document.createTextNode("VNC Port: " + "{{vncPort}}"));
-        specsUL.appendChild(li);
-    }
+        console.log(obj);
+        document.getElementById("cpuSpecs").textContent = ("CPU Cores: " + obj['cpuSpecs']);
+        document.getElementById("ramSpecs").textContent = ("RAM: " + obj['RAMSpecs'] + " MB");
+        document.getElementById("firmwareLabel").textContent = ("Firmware type: " + obj['biosType']);
+        if (obj['biosType'] == 'true') 
+        {
+            document.getElementById("firmwareLabel").textContent = ("Firmware type: " + 'UEFI');
+        }
+        else
+        {
+            document.getElementById("firmwareLabel").textContent = ("Firmware type: " + 'BIOS');
+        }
+        document.getElementById("hostPath").textContent = ("Host path: " + obj['vmPath']);
+        document.getElementById("isON").textContent = ("Is ON: " + obj['isON']);
+        if(obj['vncPort']!= null)
+        {
+            console.log(typeof(document.getElementById("specsUL")));
+            let li = document.createElement("li")
+            li.appendChild(document.createTextNode("VNC Port: " + obj['vncPort']));
+            document.getElementById("specsUL").appendChild(li);
+        }
 
-    const runButton = document.getElementById("runVM");
-    const isON = "{{isON}}";
-    if(isON == "True")
-    {
-        runButton.textContent = "Shutdown";
-        runButton.onclick = stopVM;
-    }
-    else if(isON == "False")
-    {
-        runButton.onclick = runVM;
-    }
-    else 
-    {
-        runButton.style.display = "none";
-    }
+        const runButton = document.getElementById("runVM");
+        if(obj['isON'] == "True")
+        {
+            runButton.textContent = "Shutdown";
+            runButton.onclick = stopVM;
+        }
+        else if(obj['isON'] == "False")
+        {
+            runButton.onclick = runVM;
+        }
+        else 
+        {
+            runButton.style.display = "none";
+        }
+    });
+    
+
+   
+    
     const firmwareLabel = document.getElementById("firmwareLabel");
     if("{{biosType1}}" == "True") firmwareLabel.textContent = "Firmware type: EFI";
     else firmwareLabel.textContent = "Firmware type: BIOS";
@@ -71,11 +97,11 @@
                 {
                     runButton.textContent = "Shutdown";
                     runButton.onclick = stopVM;
-                    document.getElementById("isON_Label").textContent = "IsON: True";
+                    document.getElementById("isON").textContent = "IsON: True";
                 }
                 else
                 {
-                    console.error(xhr.statusText);
+                    console.error(xmlHttp.statusText);
                 }
             }
         };
@@ -94,11 +120,11 @@
                 {
                     runButton.textContent = "run";
                     runButton.onclick = runVM;
-                    document.getElementById("isON_Label").textContent = "IsON: False";
+                    document.getElementById("isON").textContent = "IsON: False";
                 }
                 else
                 {
-                    console.error(xhr.statusText);
+                    console.error(xmlHttp.statusText);
                 }
             }
         };

@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import re
 import os
 import subprocess
 import platform
-from modules.networkAdapter import NetworkAdapter
+import json
+from modules.networkAdapter import NetworkAdapter, NetworkTypes
 from modules.virtualMachine import VirtualMachine
 
 app = Flask(__name__)
@@ -18,6 +19,7 @@ if 'Linux' in platform.uname():
     import modules.LinuxSpecsCheck as OSSpecsCheck
     hostOS = 'Linux'
     vmrunPath = 'vmrun'
+    isWorkstation = True #workaround for now
 elif 'Windows' in platform.uname():
     import modules.WindowsSpecsCheck as OSSpecsCheck
     hostOS = 'Windows' #Setting this variable here so calling functions is not needed again later in the program
@@ -103,7 +105,7 @@ def main():
 
     global vmPathList, vmrunPath, vmArray
 
-    #Clearing the content of the arrays in case of a reload of the page since this are global arrays
+    #Clearing the content of the arrays in casexmlHttp of a reload of the page since this are global arrays
     vmPathList.clear()
     vmList = ''
     vmArray.clear()
@@ -159,17 +161,25 @@ def main():
             else:
                 vncEnabled = False
                 vncPort = None
-            networkList = set()
+            networkSet = set()
             for line in txt:
                 if "ethernet" in line:
-                    networkList.add(line[0:9])
-            print(networkList)
-            tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True)
+                    networkSet.add(line[0:9])
+            print(networkSet)
+            networkList = []
+            for el in networkSet:
+                enabled = False
+                if CheckForSpecs(el + '.present = "', txt) == 'TRUE':
+                    enabled = True
+                #VMware .vmx files don't have the 'ethernetX.connectionType =' line when the network type is bridged 
+                networkType = 'bridged' if CheckForSpecs(el + '.connectionType = "', txt) == None else CheckForSpecs(el + '.connectionType = "',  txt)
+                networkList.append({"enabled": enabled, "networkType": networkType})
+            tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True, networkList)
             vmArray.append(tempVM)
             del tempVM
             f.close()
         else:
-            tempVM = VirtualMachine('1','1024',True,False,'5900','',path,False) #Creating a fake VM because the actual one doesn't exist
+            tempVM = VirtualMachine('1','1024',True,False,'5900','',path,False, []) #Creating a fake VM because the actual one doesn't exist
             vmArray.append(tempVM)
             del tempVM
             f.close()
@@ -179,6 +189,10 @@ def main():
 
 
 @app.route("/specs.html")
+def spec():
+    return render_template("specs.html", vmNumber=request.args.get("vmNumber"))
+
+@app.route("/spec")
 def specs():
     global vmArray
     vmNumber = request.args.get("vmNumber")
@@ -194,8 +208,19 @@ def specs():
             item = item.encode().decode('unicode_escape') #get rid of // 
             if item == vmPathList[x]:
                 isON = True
-        
-    return render_template("specs.html", cpuSpecs1=vmArray[x].cpuCores, RAMSpecs1=vmArray[x].ram, biosType1=vmArray[x].bios, vmPath1=vmPathList[x], vmNumber=vmNumber, vncPort=vmArray[x].vncPort, vmName=vmArray[x].vmName, isON=str(isON), exists=vmArray[x].exists)
+    specsDict = {
+        'cpuSpecs': vmArray[x].cpuCores, 
+        'RAMSpecs': vmArray[x].ram, 
+        'biosType':vmArray[x].bios, 
+        'vmPath':vmPathList[x], 
+        'vmNumber': vmNumber, 
+        'vncPort':vmArray[x].vncPort, 
+        'vmName':vmArray[x].vmName, 
+        'isON':str(isON), 
+        'exists':vmArray[x].exists, 
+        'networkList':vmArray[x].network
+    } 
+    return specsDict
 
 @app.route("/runVM")
 def runVM():
