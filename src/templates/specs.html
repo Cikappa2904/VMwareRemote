@@ -34,7 +34,6 @@
     .then(out => obj = out)
     .then(function(obj)
     {
-        console.log(obj);
         document.getElementById("cpuSpecs").textContent = ("CPU Cores: " + obj['cpuSpecs']);
         document.getElementById("ramSpecs").textContent = ("RAM: " + obj['RAMSpecs'] + " MB");
         document.getElementById("firmwareLabel").textContent = ("Firmware type: " + obj['biosType']);
@@ -50,7 +49,6 @@
         document.getElementById("isON").textContent = ("Is ON: " + obj['isON']);
         if(obj['vncPort']!= null)
         {
-            console.log(typeof(document.getElementById("specsUL")));
             let li = document.createElement("li")
             li.appendChild(document.createTextNode("VNC Port: " + obj['vncPort']));
             document.getElementById("specsUL").appendChild(li);
@@ -70,6 +68,17 @@
         {
             runButton.style.display = "none";
         }
+
+        obj['networkList'].forEach(function(x)
+        {
+
+            const li1 = document.createElement("li");
+            li1.appendChild(document.createTextNode(x.name + ".enabled: " + x.enabled));
+            document.getElementById("specsUL").appendChild(li1);
+            const li2 = document.createElement("li");
+            li2.appendChild(document.createTextNode(x.name + ".type: " + x.networkType));
+            document.getElementById("specsUL").appendChild(li2);
+        });
     });
     
 

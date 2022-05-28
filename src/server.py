@@ -173,7 +173,7 @@ def main():
                     enabled = True
                 #VMware .vmx files don't have the 'ethernetX.connectionType =' line when the network type is bridged 
                 networkType = 'bridged' if CheckForSpecs(el + '.connectionType = "', txt) == None else CheckForSpecs(el + '.connectionType = "',  txt)
-                networkList.append({"enabled": enabled, "networkType": networkType})
+                networkList.append({"enabled": enabled, "networkType": networkType, "name": el})
             tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True, networkList)
             vmArray.append(tempVM)
             del tempVM
@@ -269,6 +269,7 @@ def editVM():
         vncPort = request.form.get('VNCPort')
         if not vncPort.isnumeric(): raise TypeError("vncPort needs to be an int")
 
+        biosType = request.form.get('biosType')
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
 
@@ -284,6 +285,8 @@ def editVM():
                 if int(ram)>maxRAMSize:
                     ram = maxRAMSize
                 txt[i] = 'memsize = "' + str(ram) + '"\n'
+            if "firmware = " in txt[i]:
+                txt[i] = 'firmware = "' + biosType + '"\n'
             #yes all of this needs to be refactored but i can't be bothered right now
             if vncEnabled == "on":
                 if 'RemoteDisplay.vnc.enabled' in txt[i]:

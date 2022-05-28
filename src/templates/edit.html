@@ -17,6 +17,11 @@
         <input type="checkbox" name="VNC" id="VNC" onclick='checkVNC(this);'> <br>
         <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
         <input type="number" value="5900" name="VNCPort" id="VNCPort" style="display:none">
+        <label for="biosType">BIOS Type: </label>
+        <select name="biosType" id="biosType">
+            <option value="UEFI">UEFI</option>
+            <option value="BIOS">BIOS</option>
+        </select> <br>
         <input type="button" id="submitButton" value="Confirm">
     </form>
 </body>
