@@ -7,7 +7,7 @@
     <title>EditVM</title>
 </head>
 <body>
-    <form method="post" action="/editVM" name="editForm">
+    <form method="post" action="/editVM" name="editForm" id="editForm">
         <!-- TODO: Check for letters and symbols -->
         <label for="cpuCores">CPU Cores: </label><br>
         <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
@@ -22,10 +22,11 @@
             <option value="UEFI">UEFI</option>
             <option value="BIOS">BIOS</option>
         </select> <br>
-        <input type="button" id="submitButton" value="Confirm">
+        
     </form>
 </body>
 <script>
+    
     function addHidden(theForm, key, value) {
         //copied from: https://stackoverflow.com/questions/9251301/how-to-add-a-new-hidden-input-fields-to-the-form-on-submit
         // Create a hidden input element, and append it to the form:
@@ -57,11 +58,26 @@
             obj.value = value;
         }
     }
+    for (let i=0; i<parseInt("{{networkCardNumber}}"); i++)
+    {
+        const label = document.createElement("label");
+        label.setAttribute("for", "ethernet"+i+"_enabled");
+        label.innerHTML = "ethernet" + i + " enabled: ";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox"
+        checkbox.name = "ethernet"+i+"_enabled";
+        form.appendChild(label);
+        form.appendChild(checkbox);
+        form.appendChild(document.createElement("br"));
+    }
     addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
-    const submitButton = document.getElementById("submitButton");
+    const submitButton = document.createElement("input");
+    submitButton.type = "button";
+    submitButton.value = "Confirm";
     submitButton.onclick = function()
     {
         form.submit();
     }
+    form.appendChild(submitButton);
 </script>
 </html>

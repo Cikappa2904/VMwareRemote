@@ -34,16 +34,17 @@
     .then(out => obj = out)
     .then(function(obj)
     {
+        console.log(obj);
         document.getElementById("cpuSpecs").textContent = ("CPU Cores: " + obj['cpuSpecs']);
         document.getElementById("ramSpecs").textContent = ("RAM: " + obj['RAMSpecs'] + " MB");
-        document.getElementById("firmwareLabel").textContent = ("Firmware type: " + obj['biosType']);
-        if (obj['biosType'] == 'true') 
+        console.log(obj['biosType']);
+        if (obj['biosType'] == true) 
         {
             document.getElementById("firmwareLabel").textContent = ("Firmware type: " + 'UEFI');
         }
         else
         {
-            document.getElementById("firmwareLabel").textContent = ("Firmware type: " + 'BIOS');
+            document.getElementById("firmwareLabel").textContent = ("Firmware type: " + 'AAA');
         }
         document.getElementById("hostPath").textContent = ("Host path: " + obj['vmPath']);
         document.getElementById("isON").textContent = ("Is ON: " + obj['isON']);
@@ -84,9 +85,6 @@
 
    
     
-    const firmwareLabel = document.getElementById("firmwareLabel");
-    if("{{biosType1}}" == "True") firmwareLabel.textContent = "Firmware type: EFI";
-    else firmwareLabel.textContent = "Firmware type: BIOS";
 
     const editButton = document.getElementById("editVM");
     editButton.onclick = function()

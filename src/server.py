@@ -250,7 +250,7 @@ def stopVM():
 def editPage():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
-    return render_template("edit.html", vmNumber=vmNumber, hostCPUCores = os.cpu_count(), hostRAM = maxRAMSize)
+    return render_template("edit.html", vmNumber=vmNumber, hostCPUCores = os.cpu_count(), hostRAM = maxRAMSize, networkCardNumber=len(vmArray[x].network))
 
 
 
