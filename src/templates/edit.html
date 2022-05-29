@@ -21,6 +21,8 @@
         <select name="biosType" id="biosType">
             <option value="UEFI">UEFI</option>
             <option value="BIOS">BIOS</option>
+        <label for="howManyNetworkCards">how many network cards?</label>
+        <input type="number" name="howManyNetworkCards" min="0" max="9" value="{{networkCardNumber}}" onchange="changeNetworkCardNumber(this)">
         </select> <br>
         
     </form>
@@ -58,18 +60,55 @@
             obj.value = value;
         }
     }
-    for (let i=0; i<parseInt("{{networkCardNumber}}"); i++)
-    {
-        const label = document.createElement("label");
-        label.setAttribute("for", "ethernet"+i+"_enabled");
-        label.innerHTML = "ethernet" + i + " enabled: ";
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox"
-        checkbox.name = "ethernet"+i+"_enabled";
-        form.appendChild(label);
-        form.appendChild(checkbox);
-        form.appendChild(document.createElement("br"));
+
+    function createNetworkInput(netNumber)
+    {   const oldDiv = document.getElementById("networkDiv");
+        if(oldDiv!=null)
+        {
+            oldDiv.remove();
+        }
+        const div = document.createElement("div");
+        div.setAttribute("id", "networkDiv");
+        for (let i=0; i<netNumber; i++)
+        {
+            
+            const label = document.createElement("label");
+            label.setAttribute("for", "ethernet"+i+"_enabled");
+            label.innerHTML = "ethernet" + i + " enabled: ";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox"
+            checkbox.name = "ethernet"+i+"_enabled";
+
+            const label2 = document.createElement("label");
+            label2.setAttribute("for", "ethernet"+i+"_type")
+            label2.innerHTML = "ethernet" + i + " type: ";
+            const dropdown = document.createElement("select");
+            dropdown.name = "ethernet"+i+"_type";
+            const bridged = document.createElement("option");
+            bridged.text="bridged";
+            dropdown.add(bridged);
+            const nat = document.createElement("option");
+            nat.text="nat";
+            dropdown.add(nat)
+            const hostonly = document.createElement("option")
+            hostonly.text="hostonly";
+            dropdown.add(hostonly);
+            div.appendChild(label);
+            div.appendChild(checkbox);
+            div.appendChild(document.createElement("br"));
+            div.appendChild(label2);
+            div.appendChild(dropdown);
+            div.appendChild(document.createElement("br"));
+        }
+        form.append(div);
     }
+    createNetworkInput(parseInt("{{networkCardNumber}}"));
+    function changeNetworkCardNumber(obj)
+    {
+        netNumber = obj.value;
+        createNetworkInput(parseInt(netNumber));
+    }
+   
     addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
     addHidden(form, "networkCardNumber", "{{networkCardNumber}}"); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
     const submitButton = document.createElement("input");

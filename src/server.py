@@ -269,9 +269,41 @@ def editVM():
         vncPort = request.form.get('VNCPort')
         if not vncPort.isnumeric(): raise TypeError("vncPort needs to be an int")
 
-        biosType = request.form.get('biosType')
+        networkCardNumber = request.form.get('networkCardNumber')
+
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
+
+        for i in range(int(networkCardNumber)):
+            foundEnabled = False
+            foundType = False
+            tempEnabled = request.form.get("ethernet"+str(i)+"_enabled")
+            tempType = request.form.get("ethernet"+str(i)+"_type")
+            if tempEnabled == 'on':
+                for j in range(len(txt)):
+                    if "ethernet" + str(i) + ".present" in txt[j]:
+                        foundEnabled = True
+                        txt[j] = "ethernet" + str(i) + '.present = "TRUE"' + '\n'
+            else:
+                for j in range(len(txt)):
+                    if "ethernet" + str(i) + ".present" in txt[j]:
+                        txt[j]=''
+            for j in range(len(txt)):
+                if "ethernet" + str(i) + ".connectionType" in txt[j]:
+                    foundType = True
+                    if tempType != "bridged":
+                        txt[j] = "ethernet" + str(i) + '.connectionType = "' + tempType + '"\n'
+                    else:
+                        txt[j] = ''
+            if foundEnabled == False and tempEnabled != 'off':
+                txt.append("ethernet" + str(i) + '.present = "TRUE"' + '\n')
+            if foundType == False and tempType != 'bridged':
+                txt.append("ethernet" + str(i) + '.connectionType = "' + tempType + '"\n')
+
+
+
+        biosType = request.form.get('biosType')
+        
 
         trovatoEnabled = False
         trovatoPort = False
