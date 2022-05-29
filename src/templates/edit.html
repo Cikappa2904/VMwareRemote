@@ -71,6 +71,7 @@
         form.appendChild(document.createElement("br"));
     }
     addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
+    addHidden(form, "networkCardNumber", "{{networkCardNumber}}"); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
     const submitButton = document.createElement("input");
     submitButton.type = "button";
     submitButton.value = "Confirm";
