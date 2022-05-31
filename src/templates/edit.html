@@ -102,20 +102,22 @@
         }
         form.append(div);
     }
-    createNetworkInput(parseInt("{{networkCardNumber}}"));
+    netNumber = parseInt("{{networkCardNumber}}");
+    createNetworkInput(parseInt(netNumber));
     function changeNetworkCardNumber(obj)
     {
         netNumber = obj.value;
+        console.log(netNumber);
         createNetworkInput(parseInt(netNumber));
     }
    
     addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
-    addHidden(form, "networkCardNumber", "{{networkCardNumber}}"); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
     const submitButton = document.createElement("input");
     submitButton.type = "button";
     submitButton.value = "Confirm";
     submitButton.onclick = function()
     {
+        addHidden(form, "networkCardNumber", netNumber); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
         form.submit();
     }
     form.appendChild(submitButton);

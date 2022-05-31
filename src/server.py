@@ -270,6 +270,7 @@ def editVM():
         if not vncPort.isnumeric(): raise TypeError("vncPort needs to be an int")
 
         networkCardNumber = request.form.get('networkCardNumber')
+        print(networkCardNumber)
 
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
