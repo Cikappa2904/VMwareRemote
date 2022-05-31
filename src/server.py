@@ -3,8 +3,6 @@ import re
 import os
 import subprocess
 import platform
-import json
-from modules.networkAdapter import NetworkAdapter, NetworkTypes
 from modules.virtualMachine import VirtualMachine
 
 app = Flask(__name__)
@@ -270,7 +268,8 @@ def editVM():
         if not vncPort.isnumeric(): raise TypeError("vncPort needs to be an int")
 
         networkCardNumber = request.form.get('networkCardNumber')
-        print(networkCardNumber)
+        if int(networkCardNumber)>10: networkCardNumber = '10'
+        biosType = request.form.get('biosType')
 
         f = open(vmPathList[vmNumber], 'r')
         txt = f.readlines()
@@ -300,11 +299,10 @@ def editVM():
                 txt.append("ethernet" + str(i) + '.present = "TRUE"' + '\n')
             if foundType == False and tempType != 'bridged':
                 txt.append("ethernet" + str(i) + '.connectionType = "' + tempType + '"\n')
-
-
-
-        biosType = request.form.get('biosType')
         
+        for i in range(len(txt)):
+            if 'ethernet' in txt[i] and int(txt[i][8:9])>int(networkCardNumber)-1:
+                txt[i] = ''
 
         trovatoEnabled = False
         trovatoPort = False
