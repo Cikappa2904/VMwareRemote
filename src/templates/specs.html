@@ -92,7 +92,14 @@
     {
         window.location.href = "/edit.html?vmNumber=" + "{{vmNumber}}";
     };
-
+    const cloneButton = document.getElementById("cloneVM");
+    cloneButton.onclick = function()
+    {
+        console.log("aaaaaa")
+        let vmName = prompt("Insert new VM name: ");
+        console.log(vmName)
+        cloneVM(vmName)
+    }
     function runVM()
     {
         var xmlHttp = new XMLHttpRequest();
@@ -132,6 +139,28 @@
                 }
                 else
                 {
+                    console.error(xmlHttp.statusText);
+                }
+            }
+        };
+        xmlHttp.send(null);
+    }
+
+    function cloneVM(vmName)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", "/cloneVM" + "?vmNumber=" + "{{vmNumber}}" + "&vmName=" + vmName, true ); // false for synchronous request
+        xmlHttp.onload = function (e) 
+        {
+            if (xmlHttp.readyState === 4) 
+            {
+                if (xmlHttp.status === 200) 
+                {
+                    alert("VM cloned successfully");
+                }
+                else
+                {
+                    alert("VM not cloned");
                     console.error(xmlHttp.statusText);
                 }
             }

@@ -55,6 +55,7 @@ def GetSlicedVMXPath(path: str) -> str:
     return slicedPath
 
 def SearchVMsInFileWorkstation(txt: str)->list:
+    #TODO: use DisplayName field instead of the vmx file name
     vmList = ''
     for line in txt:
         lineToSearch = '.config = "'
@@ -77,6 +78,7 @@ def SearchVMsInFileWorkstation(txt: str)->list:
     return vmList
 
 def SearchVMsInFilePlayer(txt: str) -> list:
+    #TODO: use DisplayName field instead of the vmx file name
     vmList = ''
     for line in txt:
         lineToSearch = '.filename = "'
@@ -96,6 +98,14 @@ def SearchVMsInFilePlayer(txt: str) -> list:
             vmList+="    "
     
     return vmList
+
+def RemoveFileNameFromPath(txt: str)->str:
+    firstSlash = False
+    for i in range(len(txt)):
+        if txt[-1] == "\\" or txt[-i] == "/":
+            if not firstSlash: firstSlash = True
+            else: return txt[0:-i]
+            
 
 
 @app.route("/")
@@ -349,5 +359,15 @@ def editVM():
 def notFound():
     return render_template("notFound.html", vmPath=request.args.get('vmPath')) 
 
+
+@app.route("/cloneVM")
+def clone():
+    vmNumber = request.args.get("vmNumber")
+    vmName = request.args.get("vmName")
+    if isWorkstation:
+        print(request.full_path)
+        subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName, "full", "-cloneName=" + vmArray[int(vmNumber)].vmName]) 
+        return 'VM Clone'
+    return 'VM Not Clone'
 if __name__ == "__main__":
     app.run()
