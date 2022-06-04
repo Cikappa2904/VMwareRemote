@@ -3,6 +3,7 @@ import re
 import os
 import subprocess
 import platform
+import shutil
 from modules.virtualMachine import VirtualMachine
 
 app = Flask(__name__)
@@ -99,14 +100,19 @@ def SearchVMsInFilePlayer(txt: str) -> list:
     
     return vmList
 
-def RemoveFileNameFromPath(txt: str)->str:
+def RemoveVMNameFromPath(txt: str)->str:
     firstSlash = False
-    for i in range(len(txt)):
-        if txt[-1] == "\\" or txt[-i] == "/":
-            if not firstSlash: firstSlash = True
-            else: return txt[0:-i]
+    for i in range(1,len(txt)):
+        if txt[-i] == "\\" or txt[-i] == "/":
+            if firstSlash == False: 
+                firstSlash = True
+            else: 
+                return txt[0:-i]
             
-
+def RemoveFileNameFromPath(txt: str)->str:
+    for i in range(1,len(txt)):
+        if txt[-i] == "\\" or txt[-i] == "/":
+            return txt[0:-i]
 
 @app.route("/")
 def main():
@@ -366,7 +372,9 @@ def clone():
     vmName = request.args.get("vmName")
     if isWorkstation:
         print(request.full_path)
-        subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName, "full", "-cloneName=" + vmArray[int(vmNumber)].vmName]) 
+        if(os.path.isdir(RemoveFileNameFromPath(vmPathList[int(vmNumber)]))):
+            if not os.path.exists(RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + '/' + vmName):
+                shutil.copytree(RemoveFileNameFromPath(vmPathList[int(vmNumber)]), RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + '/' + vmName)
         return 'VM Clone'
     return 'VM Not Clone'
 if __name__ == "__main__":
