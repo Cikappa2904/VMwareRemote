@@ -12,27 +12,19 @@ vmPathList = []
 vmList = []
 vmArray = []
 
-#TODO: add networking back
 
 if 'Linux' in platform.uname():
     import modules.LinuxSpecsCheck as OSSpecsCheck
     hostOS = 'Linux'
     vmrunPath = 'vmrun'
-    isWorkstation = True #workaround for now
 elif 'Windows' in platform.uname():
     import modules.WindowsSpecsCheck as OSSpecsCheck
-    hostOS = 'Windows' #Setting this variable here so calling functions is not needed again later in the program
-
-    #vmrun.exe has a different path based on if VMware is Workstation or Player
-    if os.path.exists('C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'):
-        vmrunPath = 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
-        isWorkstation = True
-    elif os.path.exists('C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'):
-        vmrunPath = 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
-        isWorkstation = False
+    hostOS = 'Windows' #Setting this variable here so calling functions is not needed again later in the program   
 else:
     raise Exception("Platform not supported: " + platform.uname())
 
+isWorkstation = OSSpecsCheck.isWorkstationInstalled()
+vmrunPath = OSSpecsCheck.vmrunPath()
 maxRAMSize = OSSpecsCheck.maxRAM()
 
 #Checks for a specific line and gives everything that comes next to the given part of the string
@@ -63,19 +55,27 @@ def SearchVMsInFileWorkstation(txt: str)->list:
         lineNotToSearch = '.config = ""'
         if lineToSearch in line and lineNotToSearch not in line and not(re.search('folder.', line)):
             vmPathList.append(GetSlicedVMXPath(line))
-            sliceIndex = 0
-            for match in re.finditer('.vmx', line):
-                vmxPosition = match.start()
-                slicedLine = line[:vmxPosition]
-                i = 0
-                for letter in slicedLine:
-                    if slicedLine[-i] == "\\" or slicedLine[-i] == "/":
-                        sliceIndex = -i
-                        break
-                    i+=1
-            vmList+=slicedLine[sliceIndex:]
-            vmList+="    "
-    
+            vmNum = line[0:line.find(".")]
+            for line2 in txt:
+                if vmNum in line2 and 'DisplayName' in line2:
+                    vmList+=line2[line2.find('=')+3:len(line2)-2]
+                    vmList+="    "
+                    break
+
+            # sliceIndex = 0
+            # for match in re.finditer('.vmx', line):
+            #     vmxPosition = match.start()
+            #     slicedLine = line[:vmxPosition]
+            #     i = 0
+            #     for letter in slicedLine:
+            #         if slicedLine[-i] == "\\" or slicedLine[-i] == "/":
+            #             sliceIndex = -i
+            #             break
+            #         i+=1
+            # vmList+=slicedLine[sliceIndex:]
+            # vmList+="    "
+            
+    print(vmList)
     return vmList
 
 def SearchVMsInFilePlayer(txt: str) -> list:
@@ -97,7 +97,6 @@ def SearchVMsInFilePlayer(txt: str) -> list:
                     i+=1
             vmList+=slicedLine[sliceIndex:]
             vmList+="    "
-    
     return vmList
 
 def RemoveVMNameFromPath(txt: str)->str:
@@ -108,11 +107,9 @@ def RemoveVMNameFromPath(txt: str)->str:
             else: return txt[0:-i]
             
 def RemoveFileNameFromPath(txt: str)->str:
-    firstSlash = False
-    for i in range(len(txt)):
-        if txt[-1] == "\\" or txt[-i] == "/":
-            if not firstSlash: firstSlash = True
-            else: return txt[0:-i]
+    for i in range(1,len(txt)):
+        if txt[-i] == "\\" or txt[-i] == "/":
+            return txt[0:-i]
             
 
 
@@ -127,12 +124,7 @@ def main():
     vmArray.clear()
 
     #VMware Workstation
-    if hostOS == 'Windows':
-        filePath = os.getenv('APPDATA') + "\VMware\inventory.vmls"
-    elif hostOS == 'Linux':
-        filePath = os.path.expanduser('~') + '/.vmware/inventory.vmls'
-
-
+    filePath = OSSpecsCheck.inventory()
     if os.path.exists(filePath):
         f = open(filePath)
         txt = f.readlines()
@@ -141,12 +133,7 @@ def main():
 
 
     #VMware Player
-
-    if hostOS == 'Windows':
-        filePath = os.getenv('APPDATA') + "\VMware\preferences.ini"
-    elif hostOS == 'Linux':
-        filePath = os.path.expanduser('~') + '/.vmware/preferences.ini'
-
+    filePath = OSSpecsCheck.preferences()
     if os.path.exists(filePath):
         f = open(filePath)
         txt = f.readlines()
@@ -155,52 +142,49 @@ def main():
     
     for path in vmPathList:
         if os.path.exists(path):
-            f = open(path)
-            txt = f.readlines()
+            with open(path) as f:
+                txt = f.readlines()
 
-            #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
-            coreNumber = CheckForSpecs('numvcpus = "', txt)
-            if coreNumber == None: coreNumber = '1'
+                #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
+                coreNumber = CheckForSpecs('numvcpus = "', txt)
+                if coreNumber == None: coreNumber = '1'
 
-            ramSize = CheckForSpecs('memsize = "', txt)
-            vmName = CheckForSpecs('displayName = "', txt)
+                ramSize = CheckForSpecs('memsize = "', txt)
+                vmName = CheckForSpecs('displayName = "', txt)
 
-            #VMware .vmx files don't have the 'firmware=' line when the VM is legacy, so we say the VM is legacy when we don't find that line
-            isEFI = True if CheckForSpecs('firmware = "', txt) == 'efi' else False
+                #VMware .vmx files don't have the 'firmware=' line when the VM is legacy, so we say the VM is legacy when we don't find that line
+                isEFI = True if CheckForSpecs('firmware = "', txt) == 'efi' else False
 
-            #VMware .vmx files don't have the 'RemoteDisplay.vnc.port =' line when using the default port 5900
-            vncPort = CheckForSpecs('RemoteDisplay.vnc.port = "', txt)
-            if CheckForSpecs('RemoteDisplay.vnc.enabled = "', txt) == 'TRUE':
-                vncEnabled = True
-                if vncPort == None:
-                    vncPort = '5900'
-            else:
-                vncEnabled = False
-                vncPort = None
-            networkSet = set()
-            for line in txt:
-                if "ethernet" in line:
-                    networkSet.add(line[0:9])
-            print(networkSet)
-            networkList = []
-            for el in networkSet:
-                enabled = False
-                if CheckForSpecs(el + '.present = "', txt) == 'TRUE':
-                    enabled = True
-                #VMware .vmx files don't have the 'ethernetX.connectionType =' line when the network type is bridged 
-                networkType = 'bridged' if CheckForSpecs(el + '.connectionType = "', txt) == None else CheckForSpecs(el + '.connectionType = "',  txt)
-                networkList.append({"enabled": enabled, "networkType": networkType, "name": el})
-            tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True, networkList)
-            vmArray.append(tempVM)
-            del tempVM
-            f.close()
+                #VMware .vmx files don't have the 'RemoteDisplay.vnc.port =' line when using the default port 5900
+                vncPort = CheckForSpecs('RemoteDisplay.vnc.port = "', txt)
+                if CheckForSpecs('RemoteDisplay.vnc.enabled = "', txt) == 'TRUE':
+                    vncEnabled = True
+                    if vncPort == None:
+                        vncPort = '5900'
+                else:
+                    vncEnabled = False
+                    vncPort = None
+                networkSet = set()
+                for line in txt:
+                    if "ethernet" in line:
+                        networkSet.add(line[0:9])
+
+                networkList = []
+                for el in networkSet:
+                    enabled = False
+                    if CheckForSpecs(el + '.present = "', txt) == 'TRUE':
+                        enabled = True
+                    #VMware .vmx files don't have the 'ethernetX.connectionType =' line when the network type is bridged 
+                    networkType = 'bridged' if CheckForSpecs(el + '.connectionType = "', txt) == None else CheckForSpecs(el + '.connectionType = "',  txt)
+                    networkList.append({"enabled": enabled, "networkType": networkType, "name": el})
+                tempVM = VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True, networkList)
+                vmArray.append(tempVM)
+                del tempVM
         else:
             tempVM = VirtualMachine('1','1024',True,False,'5900','',path,False, []) #Creating a fake VM because the actual one doesn't exist
             vmArray.append(tempVM)
             del tempVM
             f.close()
-    print(RemoveFileNameFromPath(vmPathList[0]))
-    #print(vmArray)
     return render_template("list.html", vmList=vmList)
 
 
@@ -256,7 +240,6 @@ def stopVM():
     vmNumber = request.args.get("vmNumber")
     x = int(vmNumber)
     if vmrunPath != '':
-        print(vmrunPath)
         subprocess.run([vmrunPath, '-T', 'ws', 'stop', vmPathList[x]])
         return 'VM Stop'
     else:
@@ -373,23 +356,24 @@ def clone():
     vmNumber = request.args.get("vmNumber")
     vmName = request.args.get("vmName")
     newVMPath = RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName
-    print(newVMPath)
     if isWorkstation:
-        print(request.full_path)
+        listPath = OSSpecsCheck.inventory()
         subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
-        f = open(os.path.expanduser('~') + '/.vmware/inventory.vmls')
-        txt = f.readlines()
-        numberList = set()
-        for line in txt:
-            if 'vmlist' in line:
-                numberList.add(line[6:line.find('.')])
-        f = open(os.path.expanduser('~') + '/.vmware/inventory.vmls', 'w')
-        txt.append('vmlist' + str(int(max(numberList))+1) + '.config = "' + newVMPath + '.vmx"\n')
-        txt.append('vmlist' + str(int(max(numberList))+1) + '.DisplayName = "' + vmName + '"\n')
-        f.write(''.join(line for line in txt))
-        f.close()
-        return 'VM Clone'
-    
-    return 'VM Not Clone'
+    else:
+        listPath = OSSpecsCheck.preferences()
+        subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+    f = open(listPath)
+    txt = f.readlines()
+    numberList = set()
+    for line in txt:
+        if 'vmlist' in line:
+            numberList.add(line[6:line.find('.')])
+    f = open(listPath, 'w')
+    txt.append('vmlist' + str(int(max(numberList))+1) + '.config = "' + newVMPath + '.vmx"\n')
+    txt.append('vmlist' + str(int(max(numberList))+1) + '.DisplayName = "' + vmName + '"\n')
+    f.write(''.join(line for line in txt))
+    f.close()
+    return 'VM Clone'
+    return 'VM Not Clone' #TODO: make this able to be reached
 if __name__ == "__main__":
     app.run()
