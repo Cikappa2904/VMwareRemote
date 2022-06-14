@@ -1,3 +1,4 @@
+from hashlib import new
 from flask import Flask, jsonify, render_template, request
 import re
 import os
@@ -104,10 +105,8 @@ def RemoveVMNameFromPath(txt: str)->str:
     firstSlash = False
     for i in range(1,len(txt)):
         if txt[-i] == "\\" or txt[-i] == "/":
-            if firstSlash == False: 
-                firstSlash = True
-            else: 
-                return txt[0:-i]
+            if not firstSlash: firstSlash = True
+            else: return txt[0:-i]
             
 def RemoveFileNameFromPath(txt: str)->str:
     for i in range(1,len(txt)):
@@ -197,7 +196,7 @@ def main():
             vmArray.append(tempVM)
             del tempVM
             f.close()
-    
+    print(RemoveFileNameFromPath(vmPathList[0]))
     #print(vmArray)
     return render_template("list.html", vmList=vmList)
 
@@ -370,12 +369,24 @@ def notFound():
 def clone():
     vmNumber = request.args.get("vmNumber")
     vmName = request.args.get("vmName")
+    newVMPath = RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName
+    print(newVMPath)
     if isWorkstation:
         print(request.full_path)
-        if(os.path.isdir(RemoveFileNameFromPath(vmPathList[int(vmNumber)]))):
-            if not os.path.exists(RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + '/' + vmName):
-                shutil.copytree(RemoveFileNameFromPath(vmPathList[int(vmNumber)]), RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + '/' + vmName)
+        subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+        f = open(os.path.expanduser('~') + '/.vmware/inventory.vmls')
+        txt = f.readlines()
+        numberList = set()
+        for line in txt:
+            if 'vmlist' in line:
+                numberList.add(line[6:line.find('.')])
+        f = open(os.path.expanduser('~') + '/.vmware/inventory.vmls', 'w')
+        txt.append('vmlist' + str(int(max(numberList))+1) + '.config = "' + newVMPath + '.vmx"\n')
+        txt.append('vmlist' + str(int(max(numberList))+1) + '.DisplayName = "' + vmName + '"\n')
+        f.write(''.join(line for line in txt))
+        f.close()
         return 'VM Clone'
+    
     return 'VM Not Clone'
 if __name__ == "__main__":
     app.run()
