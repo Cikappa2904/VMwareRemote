@@ -4,7 +4,6 @@ import re
 import os
 import subprocess
 import platform
-import shutil
 from modules.virtualMachine import VirtualMachine
 
 app = Flask(__name__)
@@ -109,9 +108,13 @@ def RemoveVMNameFromPath(txt: str)->str:
             else: return txt[0:-i]
             
 def RemoveFileNameFromPath(txt: str)->str:
-    for i in range(1,len(txt)):
-        if txt[-i] == "\\" or txt[-i] == "/":
-            return txt[0:-i]
+    firstSlash = False
+    for i in range(len(txt)):
+        if txt[-1] == "\\" or txt[-i] == "/":
+            if not firstSlash: firstSlash = True
+            else: return txt[0:-i]
+            
+
 
 @app.route("/")
 def main():
