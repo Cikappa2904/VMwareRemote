@@ -2,7 +2,7 @@ from .networkAdapter import *
 import re
 import subprocess
 class VirtualMachine:
-    def __init__(self, cpuCores: str, ram: str, bios: bool, vncEnabled: bool, vncPort: str, vmName: str, vmPath: str, exists: bool, network: list) -> None:
+    def __init__(self, cpuCores: str, ram: str, bios: bool, vncEnabled: bool, vncPort: str, vmName: str, vmPath: str, exists: bool, network: list, encrypted: bool) -> None:
         self.cpuCores = cpuCores
         self.ram = ram
         self.bios = bios
@@ -12,6 +12,7 @@ class VirtualMachine:
         self.vmPath = vmPath
         self.exists = exists
         self.network = network
+        self.encrypted = encrypted
     def __repr__(self) ->str: 
         return str(self.cpuCores) + ' ' + str(self.ram) + ' ' + self.bios + ' ' + str(self.vncEnabled) + ' ' + str(self.vncPort) + ' ' + self.vmName + ' ' + self.vmPath + ' ' 
 

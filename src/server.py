@@ -1,5 +1,5 @@
 from hashlib import new
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, abort, Response
 import re
 import os
 import subprocess
@@ -26,6 +26,13 @@ else:
 isWorkstation = OSSpecsCheck.isWorkstationInstalled()
 vmrunPath = OSSpecsCheck.vmrunPath()
 maxRAMSize = OSSpecsCheck.maxRAM()
+
+
+@app.errorhandler(400)
+def bad_request(e):
+    print(e)
+    return str(e)
+
 
 @app.route("/")
 def main():
@@ -59,7 +66,9 @@ def main():
         if os.path.exists(path):
             with open(path) as f:
                 txt = f.readlines()
-                if 'encryption' in txt: return render_template("notFound.html")
+                encrypted = False
+                for line in txt: 
+                    if 'encryption' in line: encrypted = True
 
                 #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
                 coreNumber = VM.CheckForSpecs('numvcpus = "', txt)
@@ -80,24 +89,27 @@ def main():
                 else:
                     vncEnabled = False
                     vncPort = None
+
                 networkSet = set()
                 for line in txt:
                     if "ethernet" in line:
-                        networkSet.add(line[0:9])
-
+                        networkSet.add(line[0:line.find(".")])
+                print(networkSet)
                 networkList = []
                 for el in networkSet:
                     enabled = False
                     if VM.CheckForSpecs(el + '.present = "', txt) == 'TRUE':
                         enabled = True
-                    #VMware .vmx files don't have the 'ethernetX.connectionType =' line when the network type is bridged 
-                    networkType = 'bridged' if VM.CheckForSpecs(el + '.connectionType = "', txt) == None else VM.CheckForSpecs(el + '.connectionType = "',  txt)
+                    #VMware .vmx files don't have the 'ethernetX.connectionType =' line when the network type is bridged
+                    temp =  VM.CheckForSpecs(el + '.connectionType = "', txt)
+                    networkType = 'bridged' if temp == None else temp
+
                     networkList.append({"enabled": enabled, "networkType": networkType, "name": el})
-                tempVM = VM.VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True, networkList)
+                tempVM = VM.VirtualMachine(coreNumber, ramSize, isEFI, vncEnabled, vncPort, vmName, path, True, networkList, encrypted)
                 vmArray.append(tempVM)
                 del tempVM
         else:
-            tempVM = VM.VirtualMachine('1','1024',True,False,'5900','',path,False, []) #Creating a fake VM because the actual one doesn't exist
+            tempVM = VM.VirtualMachine('1','1024',True,False,'5900','',path,False, [], False) #Creating a fake VM because the actual one doesn't exist
             vmArray.append(tempVM)
             del tempVM
             f.close()
@@ -106,6 +118,8 @@ def main():
 
 @app.route("/specs.html")
 def spec():
+    x = int(request.args.get("vmNumber"))
+    if vmArray[x].encrypted == True: return render_template("encrypted.html", vmPath = vmPathList[x]) 
     return render_template("specs.html", vmNumber=request.args.get("vmNumber"))
 
 @app.route("/spec")
@@ -136,9 +150,15 @@ def runVM():
     x = int(vmNumber)
     if vmrunPath != '':
         if isWorkstation:
-            subprocess.run([vmrunPath, '-T', 'ws', 'start', vmPathList[x]])
+            try:
+                subprocess.run([vmrunPath, '-T', 'ws', 'start', vmPathList[x]])
+            except:
+                return 'VM not run'
         else:
-            subprocess.run([vmrunPath, '-T', 'player', 'start', vmPathList[x]])
+            try:
+                subprocess.run([vmrunPath, '-T', 'player', 'start', vmPathList[x]])
+            except:
+                return 'VM not run'
         return 'VM Run'
     else:
         return 'VM not run'
@@ -149,12 +169,18 @@ def stopVM():
     x = int(vmNumber)
     if vmrunPath != '':
         if isWorkstation:
-            subprocess.run([vmrunPath, '-T', 'ws', 'stop', vmPathList[x]])
+            try:
+                subprocess.run([vmrunPath, '-T', 'ws', 'stop', vmPathList[x]])
+            except:
+                return 'VM not run'
         else:
-            subprocess.run([vmrunPath, '-T', 'player', 'stop', vmPathList[x]])
-        return 'VM Stop'
+            try:
+                subprocess.run([vmrunPath, '-T', 'player', 'stop', vmPathList[x]])
+            except:
+                return 'VM not stop'
+        return 'VM stop'
     else:
-        return 'VM not Stop'
+        return 'VM not stop'
 
 @app.route("/edit.html")
 def editPage():
@@ -170,95 +196,96 @@ def editVM():
         vmNumber = int(request.form.get('vmNumber'))
 
         cpuCores = request.form.get('cpuCores')
-        if not cpuCores.isnumeric(): raise TypeError("cpuCores needs to be an int")
+        if not cpuCores.isnumeric(): abort(400)
 
         ram = request.form.get('ram')
-        if not ram.isnumeric(): raise TypeError("ram needs to be an int")
+        if not ram.isnumeric(): abort(400)
         
         vncEnabled = request.form.get('VNC')
         vncPort = request.form.get('VNCPort')
-        if not vncPort.isnumeric(): raise TypeError("vncPort needs to be an int")
+        if not vncPort.isnumeric(): abort(400)
 
         networkCardNumber = request.form.get('networkCardNumber')
-        if int(networkCardNumber)>10: networkCardNumber = '10'
         biosType = request.form.get('biosType')
 
-        f = open(vmPathList[vmNumber], 'r')
-        txt = f.readlines()
+        #f = open(vmPathList[vmNumber], 'r')
+        with open(vmPathList[vmNumber], 'r') as f:
+            txt = f.readlines()
 
-        for i in range(int(networkCardNumber)):
-            foundEnabled = False
-            foundType = False
-            tempEnabled = request.form.get("ethernet"+str(i)+"_enabled")
-            tempType = request.form.get("ethernet"+str(i)+"_type")
-            if tempEnabled == 'on':
+            for i in range(int(networkCardNumber)):
+                foundEnabled = False
+                foundType = False
+                tempEnabled = request.form.get("ethernet"+str(i)+"_enabled")
+                tempType = request.form.get("ethernet"+str(i)+"_type")
+                if tempEnabled == 'on':
+                    for j in range(len(txt)):
+                        if "ethernet" + str(i) + ".present" in txt[j]:
+                            foundEnabled = True
+                            txt[j] = "ethernet" + str(i) + '.present = "TRUE"' + '\n'
+                else:
+                    for j in range(len(txt)):
+                        if "ethernet" + str(i) + ".present" in txt[j]:
+                            txt[j]=''
                 for j in range(len(txt)):
-                    if "ethernet" + str(i) + ".present" in txt[j]:
-                        foundEnabled = True
-                        txt[j] = "ethernet" + str(i) + '.present = "TRUE"' + '\n'
-            else:
-                for j in range(len(txt)):
-                    if "ethernet" + str(i) + ".present" in txt[j]:
-                        txt[j]=''
-            for j in range(len(txt)):
-                if "ethernet" + str(i) + ".connectionType" in txt[j]:
-                    foundType = True
-                    if tempType != "bridged":
-                        txt[j] = "ethernet" + str(i) + '.connectionType = "' + tempType + '"\n'
-                    else:
-                        txt[j] = ''
-            if foundEnabled == False and tempEnabled != 'off':
-                txt.append("ethernet" + str(i) + '.present = "TRUE"' + '\n')
-            if foundType == False and tempType != 'bridged':
-                txt.append("ethernet" + str(i) + '.connectionType = "' + tempType + '"\n')
-        
-        for i in range(len(txt)):
-            if 'ethernet' in txt[i] and int(txt[i][8:9])>int(networkCardNumber)-1:
-                txt[i] = ''
+                    if "ethernet" + str(i) + ".connectionType" in txt[j]:
+                        foundType = True
+                        if tempType != "bridged":
+                            txt[j] = "ethernet" + str(i) + '.connectionType = "' + tempType + '"\n'
+                        else:
+                            txt[j] = ''
+                if foundEnabled == False and tempEnabled != 'off':
+                    txt.append("ethernet" + str(i) + '.present = "TRUE"' + '\n')
+                if foundType == False and tempType != 'bridged':
+                    txt.append("ethernet" + str(i) + '.connectionType = "' + tempType + '"\n')
+            
+            for i in range(len(txt)):
+                if 'ethernet' in txt[i] and int(txt[i][8:txt[i].find(".")])>int(networkCardNumber)-1:
+                    txt[i] = ''
 
-        trovatoEnabled = False
-        trovatoPort = False
+            trovatoEnabled = False
+            trovatoPort = False
 
-        for i in range(len(txt)):
-            if "numvcpus" in txt[i]:
-                if int(cpuCores)>os.cpu_count(): #Limiting the CPU cores assigned to the VM to the limit of cores in the host system
-                    cpuCores = os.cpu_count()
-                txt[i] = 'numvcpus = "' + str(cpuCores) + '"\n'
-            if "memsize" in txt[i]: #Limiting the RAM assigned to the VM to the RAM in the host system
-                if int(ram)>maxRAMSize:
-                    ram = maxRAMSize
-                txt[i] = 'memsize = "' + str(ram) + '"\n'
-            if "firmware = " in txt[i]:
-                txt[i] = 'firmware = "' + biosType + '"\n'
-            #yes all of this needs to be refactored but i can't be bothered right now
-            if vncEnabled == "on":
-                if 'RemoteDisplay.vnc.enabled' in txt[i]:
-                    txt[i] = 'RemoteDisplay.vnc.enabled = "TRUE"\n'
-                    trovatoEnabled = True
-                if vncPort != '5900':
-                    if "RemoteDisplay.vnc.port" in txt[i]:
-                        txt[i] = 'RemoteDisplay.vnc.port = "' + vncPort + '"\n'
-                        trovatoPort = True
-            else:
-                if 'RemoteDisplay.vnc.enabled = "TRUE"' in txt[i]:
-                    txt[i]=''
-                elif 'RemoteDisplay.vnc.port =' in txt[i]:
-                    txt[i]=''
+            for i in range(len(txt)):
+                if "numvcpus" in txt[i]:
+                    if int(cpuCores)>os.cpu_count(): #Limiting the CPU cores assigned to the VM to the limit of cores in the host system
+                        cpuCores = os.cpu_count()
+                    txt[i] = 'numvcpus = "' + str(cpuCores) + '"\n'
+                elif "memsize" in txt[i]: #Limiting the RAM assigned to the VM to the RAM in the host system
+                    if int(ram)>maxRAMSize:
+                        ram = maxRAMSize
+                    txt[i] = 'memsize = "' + str(ram) + '"\n'
+                elif "firmware = " in txt[i]:
+                    txt[i] = 'firmware = "' + biosType + '"\n'
+                #yes all of this needs to be refactored but i can't be bothered right now
+                if vncEnabled == "on":
+                    if 'RemoteDisplay.vnc.enabled' in txt[i]:
+                        txt[i] = 'RemoteDisplay.vnc.enabled = "TRUE"\n'
+                        trovatoEnabled = True
+                    if vncPort != '5900':
+                        if "RemoteDisplay.vnc.port" in txt[i]:
+                            txt[i] = 'RemoteDisplay.vnc.port = "' + vncPort + '"\n'
+                            trovatoPort = True
+                else:
+                    if 'RemoteDisplay.vnc.enabled = "TRUE"' in txt[i]:
+                        txt[i]=''
+                    elif 'RemoteDisplay.vnc.port =' in txt[i]:
+                        txt[i]=''
 
-        if vncEnabled == 'on':
-            if not trovatoEnabled:
-                txt.append('RemoteDisplay.vnc.enabled = "TRUE"\n')
-            if not trovatoPort and vncPort != '5900':
-                txt.append('RemoteDisplay.vnc.port = "' + vncPort + '"\n')
-        f.close()
+            if vncEnabled == 'on':
+                if not trovatoEnabled:
+                    txt.append('RemoteDisplay.vnc.enabled = "TRUE"\n')
+                if not trovatoPort and vncPort != '5900':
+                    txt.append('RemoteDisplay.vnc.port = "' + vncPort + '"\n')
 
-        f = open(vmPathList[vmNumber], 'w')
-        f.write(''.join(line for line in txt))
-        f.close()
+        #f = open(vmPathList[vmNumber], 'w')
+        with open(vmPathList[vmNumber], 'w') as f:
+            f.write(''.join(line for line in txt))
+            f.close()
         return '<script>window.location.href = "/";</script>'
 
 @app.route("/notFound.html")
 def notFound():
+    #this is different from error 404 as it means a VM contained in the .vmx file was not found (this sometimes happens also on the VMware UI)
     return render_template("notFound.html", vmPath=request.args.get('vmPath')) 
 
 
