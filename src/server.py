@@ -296,22 +296,26 @@ def clone():
     newVMPath = VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName
     if isWorkstation:
         listPath = OSSpecsCheck.inventory()
-        subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+        try:
+            subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+        except:
+            return 'VM Not Clone'
     else:
         listPath = OSSpecsCheck.preferences()
-        subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
-    f = open(listPath)
-    txt = f.readlines()
-    numberList = set()
-    for line in txt:
-        if 'vmlist' in line:
-            numberList.add(line[6:line.find('.')])
-    f = open(listPath, 'w')
-    txt.append('vmlist' + str(int(max(numberList))+1) + '.config = "' + newVMPath + '.vmx"\n')
-    txt.append('vmlist' + str(int(max(numberList))+1) + '.DisplayName = "' + vmName + '"\n')
-    f.write(''.join(line for line in txt))
-    f.close()
+        try:
+            subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+        except:
+            return 'VM Not Clone' 
+    with open(listPath) as f:
+        txt = f.readlines()
+        numberList = set()
+        for line in txt:
+            if 'vmlist' in line:
+                numberList.add(line[6:line.find('.')])
+        f = open(listPath, 'w')
+        txt.append('vmlist' + str(int(max(numberList))+1) + '.config = "' + newVMPath + '.vmx"\n')
+        txt.append('vmlist' + str(int(max(numberList))+1) + '.DisplayName = "' + vmName + '"\n')
+        f.write(''.join(line for line in txt))
     return 'VM Clone'
-    return 'VM Not Clone' #TODO: make this able to be reached
 if __name__ == "__main__":
     app.run()
