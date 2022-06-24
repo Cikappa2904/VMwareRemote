@@ -4,28 +4,74 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <title>VM List</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </head>
 <body>
    <ul id="listOfVMs"></ul>
+
+  <div class="row" id="template">
+    <div class="col s12 m6">
+      <div class="card blue-grey darken-1">
+        <div class="card-content white-text">
+          <span class="card-title">Card Title</span>
+          <p id="text">I am a very simple card. I am good at containing small bits of information.
+          I am convenient because I require little markup to use effectively.</p>
+        </div>
+        <div class="card-action">
+          <a href="#">This is a link</a>
+          <a href="#">This is a link</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 <script>
-    const vmListString = "{{vmList}}";
-    const vmListArray = vmListString.split("    ");
-    vmListUL = document.getElementById('listOfVMs');
-    for (let x in vmListArray)
-    {
-        var li = document.createElement("li");
-        var a = document.createElement("a");
-        if(vmListArray[x]!="")
-        {
-            a.appendChild(document.createTextNode(vmListArray[x]));
-            const hrefLink = "specs.html?vmNumber=" + x;
-            a.setAttribute('href', hrefLink);
-            li.appendChild(a);
-            vmListUL.appendChild(li);
-        }
+    // const vmListString = "{{vmList}}";
+    // const vmListArray = vmListString.split("    ");
+    // vmListUL = document.getElementById('listOfVMs');
+    // for (let x in vmListArray)
+    // {
+    //     var li = document.createElement("li");
+    //     var a = document.createElement("a");
+    //     if(vmListArray[x]!="")
+    //     {
+    //         a.appendChild(document.createTextNode(vmListArray[x]));
+    //         const hrefLink = "specs.html?vmNumber=" + x;
+    //         a.setAttribute('href', hrefLink);
+    //         li.appendChild(a);
+    //         vmListUL.appendChild(li);
+    //     }
         
+    // }
+
+    //get JSON (https://stackoverflow.com/questions/12460378/how-to-get-json-from-url-in-javascript)
+    // 
+
+    // }
+    const template = document.getElementById("template");
+    function createCards(i)
+    {
+        let url = '/vmOverview?vmNumber=' + i.toString();
+        var obj;
+        fetch(url)
+        .then(res => res.json())
+        .then(out => obj = out)
+        .then(function(obj)
+        {
+            const newCard = template.cloneNode(true);
+            newCard.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerHTML = obj["vmName"];
+            newCard.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerHTML = "CPUs: " + obj["cpuSpecs"] + "<br>" + "RAM: " + obj["RAMSpecs"] + "<br>"+ "BIOS Type: " + obj["biosType"] + "<br>";
+            
+            document.body.appendChild(newCard);
+
+        });
+    }
+    console.log("{{vmNumbers}}");
+    for (let i = 0; i<parseInt("{{vmNumbers}}"); i++)
+    {
+        createCards(i);
     }
 
 

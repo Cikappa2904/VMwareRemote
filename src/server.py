@@ -113,8 +113,20 @@ def main():
             vmArray.append(tempVM)
             del tempVM
             f.close()
-    return render_template("list.html", vmList=vmList)
+    return render_template("list.html", vmNumbers=len(vmArray))
 
+
+@app.route("/vmOverview")
+def overview():
+    x = int(request.args.get("vmNumber"))
+    if vmArray[x].encrypted == True: return render_template("encrypted.html", vmPath = vmPathList[x]) 
+    overviewDict = {
+        'cpuSpecs': vmArray[x].cpuCores,
+        'RAMSpecs': vmArray[x].ram,
+        'biosType': 'efi' if vmArray[x].bios else 'bios',
+        'vmName': vmArray[x].vmName
+    }
+    return overviewDict
 
 @app.route("/specs.html")
 def spec():
