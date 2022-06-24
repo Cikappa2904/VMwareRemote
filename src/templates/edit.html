@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EditVM</title>
+</head>
+<body>
+    <form method="post" action="/editVM" name="editForm" id="editForm">
+        <!-- TODO: Check for letters and symbols -->
+        <label for="cpuCores">CPU Cores: </label><br>
+        <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
+        <label for="cpuCores">RAM: </label><br>
+        <input type="number" onKeyDown='checkMAXValue(this, "{{hostRAM}}" )' min="4" max="{{hostRAM}}" value="1024" name="ram" id="ram"><br>
+        <label for="VNC">VNC Enabled:</label>
+        <input type="checkbox" name="VNC" id="VNC" onclick='checkVNC(this);'> <br>
+        <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
+        <input type="number" value="5900" name="VNCPort" id="VNCPort" style="display:none">
+        <label for="biosType">BIOS Type: </label>
+        <select name="biosType" id="biosType">
+            <option value="UEFI">UEFI</option>
+            <option value="BIOS">BIOS</option>
+        <label for="howManyNetworkCards">how many network cards?</label>
+        <input type="number" name="howManyNetworkCards" min="0" max="9" value="{{networkCardNumber}}" onchange="changeNetworkCardNumber(this)">
+        </select> <br>
+        
+    </form>
+</body>
+<script>
+    
+    function addHidden(theForm, key, value) {
+        //copied from: https://stackoverflow.com/questions/9251301/how-to-add-a-new-hidden-input-fields-to-the-form-on-submit
+        // Create a hidden input element, and append it to the form:
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key; // 'the key/name of the attribute/field that is sent to the server
+        input.value = value;
+        theForm.appendChild(input);
+    }
+
+    const form = document.forms['editForm'];
+    function checkVNC(checkbox)
+    {
+        if(checkbox.checked) 
+        {
+            document.getElementById("VNCPort").style.display = "block";
+            document.getElementById("VNCPortLabel").style.display = "block";
+        }
+        else
+        {
+            document.getElementById("VNCPort").style.display = "none";
+            document.getElementById("VNCPortLabel").style.display = "none";
+        }
+    }
+    function checkMAXValue(obj, value)
+    {
+        if(parseInt(obj.value)>parseInt(value))
+        {
+            obj.value = value;
+        }
+    }
+
+    function createNetworkInput(netNumber)
+    {   const oldDiv = document.getElementById("networkDiv");
+        if(oldDiv!=null)
+        {
+            oldDiv.remove();
+        }
+        const div = document.createElement("div");
+        div.setAttribute("id", "networkDiv");
+        for (let i=0; i<netNumber; i++)
+        {
+            
+            const label = document.createElement("label");
+            label.setAttribute("for", "ethernet"+i+"_enabled");
+            label.innerHTML = "ethernet" + i + " enabled: ";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox"
+            checkbox.name = "ethernet"+i+"_enabled";
+
+            const label2 = document.createElement("label");
+            label2.setAttribute("for", "ethernet"+i+"_type")
+            label2.innerHTML = "ethernet" + i + " type: ";
+            const dropdown = document.createElement("select");
+            dropdown.name = "ethernet"+i+"_type";
+            const bridged = document.createElement("option");
+            bridged.text="bridged";
+            dropdown.add(bridged);
+            const nat = document.createElement("option");
+            nat.text="nat";
+            dropdown.add(nat)
+            const hostonly = document.createElement("option")
+            hostonly.text="hostonly";
+            dropdown.add(hostonly);
+            div.appendChild(label);
+            div.appendChild(checkbox);
+            div.appendChild(document.createElement("br"));
+            div.appendChild(label2);
+            div.appendChild(dropdown);
+            div.appendChild(document.createElement("br"));
+        }
+        form.append(div);
+    }
+    netNumber = parseInt("{{networkCardNumber}}");
+    createNetworkInput(parseInt(netNumber));
+    function changeNetworkCardNumber(obj)
+    {
+        netNumber = obj.value;
+        console.log(netNumber);
+        createNetworkInput(parseInt(netNumber));
+    }
+   
+    addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
+    const submitButton = document.createElement("input");
+    submitButton.type = "button";
+    submitButton.value = "Confirm";
+    submitButton.onclick = function()
+    {
+        addHidden(form, "networkCardNumber", netNumber); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
+        form.submit();
+    }
+    form.appendChild(submitButton);
+</script>
+</html>
