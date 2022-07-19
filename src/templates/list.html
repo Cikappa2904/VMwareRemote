@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,22 +12,23 @@
 <body>
    <ul id="listOfVMs"></ul>
 
-  <div class="row" id="template">
-    <div class="col s12 m6">
+  <div class="row" id="template" style="display: none;" >
+    <div class="col s12 m6" >
       <div class="card blue-grey darken-1">
-        <div class="card-content white-text">
+        <div class="card-content white-text" class="customCard">
           <span class="card-title">Card Title</span>
           <p id="text">I am a very simple card. I am good at containing small bits of information.
           I am convenient because I require little markup to use effectively.</p>
         </div>
         <div class="card-action">
-          <a href="#">This is a link</a>
-          <a href="#">This is a link</a>
+          <a id="showMoreButton" href="#">Show more</a>
         </div>
       </div>
     </div>
   </div>
+  <h1>ciao</h1>
 </body>
+
 <script>
     // const vmListString = "{{vmList}}";
     // const vmListArray = vmListString.split("    ");
@@ -60,10 +62,19 @@
         .then(out => obj = out)
         .then(function(obj)
         {
+            console.log(obj);
             const newCard = template.cloneNode(true);
+            newCard.style.display = "inline";
             newCard.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerHTML = obj["vmName"];
-            newCard.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerHTML = "CPUs: " + obj["cpuSpecs"] + "<br>" + "RAM: " + obj["RAMSpecs"] + "<br>"+ "BIOS Type: " + obj["biosType"] + "<br>";
-            
+            if (obj["encrypted"]==true)
+            {
+                newCard.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerHTML = "Encrypted VM. Unable to view the specs.";
+            }
+            else
+            {
+                newCard.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerHTML = "CPUs: " + obj["cpuSpecs"] + "<br>" + "RAM: " + obj["RAMSpecs"] + "MB<br>"+ "BIOS Type: " + obj["biosType"] + "<br>";
+            }
+            newCard.firstElementChild.firstElementChild.lastElementChild.firstElementChild.href = "specs.html?vmNumber=" + i.toString();
             document.body.appendChild(newCard);
 
         });
