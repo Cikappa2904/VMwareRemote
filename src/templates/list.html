@@ -1,59 +1,66 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <link rel="stylesheet" href="style.css">
+  <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>VM List</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
 </head>
 <body>
-   <ul id="listOfVMs"></ul>
 
-  <div class="row" id="template" style="display: none;" >
-    <div class="col s12 m6" >
-      <div class="card blue-grey darken-1">
-        <div class="card-content white-text" class="customCard">
-          <span class="card-title">Card Title</span>
-          <p id="text">I am a very simple card. I am good at containing small bits of information.
-          I am convenient because I require little markup to use effectively.</p>
+    <nav class="nav-wraper">
+        <a href="#" class="brand-logo" style="font-size: 20px; margin-left: 10px;">Home</a>
+        <a href="#" class="sidenav-trigger" data-target="mobile-links">
+            <i class="material-icons">menu</i>
+        </a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="https://github.com/Cikappa2904/VMwareRemote">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <ul class="sidenav" id="mobile-links">
+        <li><a href="https://github.com/Cikappa2904/VMwareRemote">GitHub</a></li>
+    </ul>
+
+<!-- Template for the cards -->
+    <div class="container">
+        <div class="row" id="template">
+            <div class="col s4"  style="display: none; " >
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Card Title</span>
+                        <p id="text">I am a very simple card. I am good at containing small bits of information.
+                        I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                    <a id="showMoreButton" href="#">Show more</a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-action">
-          <a id="showMoreButton" href="#">Show more</a>
-        </div>
-      </div>
     </div>
-  </div>
+<!-- Template for the cards -->
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('.sidenav').sidenav();
+        })
+    </script>
+
 </body>
 
+
 <script>
-    // const vmListString = "{{vmList}}";
-    // const vmListArray = vmListString.split("    ");
-    // vmListUL = document.getElementById('listOfVMs');
-    // for (let x in vmListArray)
-    // {
-    //     var li = document.createElement("li");
-    //     var a = document.createElement("a");
-    //     if(vmListArray[x]!="")
-    //     {
-    //         a.appendChild(document.createTextNode(vmListArray[x]));
-    //         const hrefLink = "specs.html?vmNumber=" + x;
-    //         a.setAttribute('href', hrefLink);
-    //         li.appendChild(a);
-    //         vmListUL.appendChild(li);
-    //     }
-        
-    // }
-
-    //get JSON (https://stackoverflow.com/questions/12460378/how-to-get-json-from-url-in-javascript)
-    // 
-
-    // }
-    const template = document.getElementById("template");
+    const template = document.getElementById("template").firstElementChild;
     function createCards(i)
     {
+        //Function that creates the materialize cards by copying the hidden one from the html (id=template), and then putting the VM specs and name from the async JSON
         let url = '/vmOverview?vmNumber=' + i.toString();
         var obj;
         fetch(url)
@@ -61,24 +68,22 @@
         .then(out => obj = out)
         .then(function(obj)
         {
-            console.log(obj);
             const newCard = template.cloneNode(true);
-            newCard.style.display = "inline";
-            newCard.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerHTML = obj["vmName"];
-            if (obj["encrypted"]==true)
+            newCard.style.display = "block";
+            newCard.firstElementChild.firstElementChild.firstElementChild.innerHTML = obj["vmName"];
+            if (obj["encrypted"])
             {
-                newCard.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerHTML = "Encrypted VM. Unable to view the specs.";
+                newCard.firstElementChild.firstElementChild.lastElementChild.innerHTML = "Encrypted VM. Unable to view the specs.";
             }
             else
             {
-                newCard.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerHTML = "CPUs: " + obj["cpuSpecs"] + "<br>" + "RAM: " + obj["RAMSpecs"] + "MB<br>"+ "BIOS Type: " + obj["biosType"] + "<br>";
+                newCard.firstElementChild.firstElementChild.lastElementChild.innerHTML = "CPUs: " + obj["cpuSpecs"] + "<br>" + "RAM: " + obj["RAMSpecs"] + " MB<br>"+ "BIOS Type: " + obj["biosType"] + "<br>";
             }
-            newCard.firstElementChild.firstElementChild.lastElementChild.firstElementChild.href = "specs.html?vmNumber=" + i.toString();
-            document.body.appendChild(newCard);
+            newCard.firstElementChild.lastElementChild.firstElementChild.href = "specs.html?vmNumber=" + i.toString();
+            document.getElementById("template").appendChild(newCard);
 
         });
     }
-    console.log("{{vmNumbers}}");
     for (let i = 0; i<parseInt("{{vmNumbers}}"); i++)
     {
         createCards(i);
