@@ -134,7 +134,7 @@ def overview():
 def spec():
     x = int(request.args.get("vmNumber"))
     if vmArray[x].encrypted == True: return render_template("encrypted.html", vmPath = vmPathList[x]) 
-    return render_template("specs.html", vmNumber=request.args.get("vmNumber"))
+    return render_template("specs.html", vmNumber=request.args.get("vmNumber"), vmName=vmArray[x].vmName)
 
 @app.route("/spec")
 def specs():

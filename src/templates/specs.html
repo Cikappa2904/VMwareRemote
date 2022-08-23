@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 </head>
 <script>
     document.title = "{{vmName}}";
@@ -13,17 +19,42 @@
     }
 </script>
 <body>
-    
-    <ul id="specsUL">
-        <li id="cpuSpecs"></li>
-        <li id="ramSpecs"></li>
-        <li id="firmwareLabel"></li>
-        <li id="hostPath"></li>
-        <li id = "isON"></li>
+    <nav class="nav-wraper">
+        <a href="#" class="brand-logo" style="font-size: 20px; margin-left: 10px;">Home</a>
+        <a href="#" class="sidenav-trigger" data-target="mobile-links">
+            <i class="material-icons">menu</i>
+        </a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="https://github.com/Cikappa2904/VMwareRemote">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <ul class="sidenav" id="mobile-links">
+        <li><a href="https://github.com/Cikappa2904/VMwareRemote">GitHub</a></li>
     </ul>
-    <button id="runVM">run</button>
-    <button id="editVM">Edit</button>
-    <button id="cloneVM">Clone</button>
+    <div class="container">
+        <ul id="specsUL" class="collection with-header">
+            <li class="collection-header green lighten-2"><center><h4>{{vmName}}</h2></center></li>
+            <li class="collection-item" id="cpuSpecs"></li>
+            <li class="collection-item" id="ramSpecs"></li>
+            <li class="collection-item" id="firmwareLabel"></li>
+            <li class="collection-item" id="hostPath"></li>
+            <li class="collection-item" id = "isON"></li>
+        </ul>
+        <center>
+            <a class="waves-effect waves-light btn blue-grey darken-2" id="runVM">run</a>
+            <a class="waves-effect waves-light btn blue-grey darken-2" id="editVM">Edit</a>
+            <a class="waves-effect waves-light btn blue-grey darken-2" id="cloneVM">Clone</a>
+        </center>
+    </div>  
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('.sidenav').sidenav();
+        })
+    </script>
 </body>
 <script>
     
@@ -53,6 +84,7 @@
         {
             let li = document.createElement("li")
             li.appendChild(document.createTextNode("VNC Port: " + obj['vncPort']));
+            li.className = "collection-item";
             document.getElementById("specsUL").appendChild(li);
         }
 
@@ -76,8 +108,10 @@
 
             const li1 = document.createElement("li");
             li1.appendChild(document.createTextNode(x.name + ".enabled: " + x.enabled));
+            li1.className = "collection-item";
             document.getElementById("specsUL").appendChild(li1);
             const li2 = document.createElement("li");
+            li2.className = "collection-item";
             li2.appendChild(document.createTextNode(x.name + ".type: " + x.networkType));
             document.getElementById("specsUL").appendChild(li2);
         });
