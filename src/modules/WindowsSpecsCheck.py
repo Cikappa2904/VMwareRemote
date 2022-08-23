@@ -30,3 +30,11 @@ def vmrunPath():
         return 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
     return 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
 
+def pathSeparator():
+    return '\\'
+
+def vmwarePath():
+    if isWorkstationInstalled():
+        return 'C:\Program Files (x86)\VMware\VMware Workstation\\vmware.exe'
+    return 'C:\Program Files (x86)\VMware\VMware Player\\vmplayer.exe'
+

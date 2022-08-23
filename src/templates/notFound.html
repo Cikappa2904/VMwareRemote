@@ -7,8 +7,27 @@
     <title>Not Found</title>
 </head>
 <body>
+
+    <nav class="nav-wraper">
+        <a href="/" class="brand-logo" style="font-size: 20px; margin-left: 10px;">Home</a>
+        <a href="#" class="sidenav-trigger" data-target="mobile-links">
+            <i class="material-icons">menu</i>
+        </a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="https://github.com/Cikappa2904/VMwareRemote">GitHub</a></li>
+        </ul>
+    </nav>
+
     <h1>The VM you tried to open was not found.</h1>
     <h3>Please check if you have moved or renamed the folder containing it.</h2>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('.sidenav').sidenav();
+        })
+    </script>
 </body>
 <script>
     //Code taken from: https://stackoverflow.com/questions/979975/get-the-values-from-the-get-parameters-javascript

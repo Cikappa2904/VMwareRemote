@@ -196,14 +196,6 @@ def stopVM():
     else:
         return 'VM not stop'
 
-@app.route("/edit.html")
-def editPage():
-    vmNumber = request.args.get("vmNumber")
-    x = int(vmNumber)
-    return render_template("edit.html", vmNumber=vmNumber, hostCPUCores = os.cpu_count(), hostRAM = maxRAMSize, networkCardNumber=len(vmArray[x].network))
-
-
-
 @app.route("/editVM", methods=['POST'])
 def editVM():
     if request.method == 'POST':
@@ -308,29 +300,21 @@ def notFound():
 def clone():
     vmNumber = request.args.get("vmNumber")
     vmName = request.args.get("vmName")
-    newVMPath = VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName
+    pathSeparator = OSSpecsCheck.pathSeparator()
+    newVMPath = VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + pathSeparator + vmName + pathSeparator + vmName
     if isWorkstation:
-        listPath = OSSpecsCheck.inventory()
         try:
-            subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+            subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + pathSeparator + vmName + pathSeparator + vmName + ".vmx", "full", "-cloneName=" + vmName])
         except:
             return 'VM Not Clone'
     else:
         listPath = OSSpecsCheck.preferences()
         try:
-            subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], VM.RemoveFileNameFromPath(vmPathList[int(vmNumber)]) + "/" + vmName + "/" + vmName + ".vmx", "full", "-cloneName=" + vmName])
+            subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + pathSeparator + vmName + pathSeparator + vmName + ".vmx", "full", "-cloneName=" + vmName])
         except:
             return 'VM Not Clone' 
-    with open(listPath) as f:
-        txt = f.readlines()
-        numberList = set()
-        for line in txt:
-            if 'vmlist' in line:
-                numberList.add(line[6:line.find('.')])
-        f = open(listPath, 'w')
-        txt.append('vmlist' + str(int(max(numberList))+1) + '.config = "' + newVMPath + '.vmx"\n')
-        txt.append('vmlist' + str(int(max(numberList))+1) + '.DisplayName = "' + vmName + '"\n')
-        f.write(''.join(line for line in txt))
+    subprocess.run([OSSpecsCheck.vmwarePath(), newVMPath + '.vmx'])
     return 'VM Clone'
+
 if __name__ == "__main__":
     app.run()

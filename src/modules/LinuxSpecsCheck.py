@@ -20,3 +20,11 @@ def isWorkstationInstalled():
 
 def vmrunPath():
     return 'vmrun'
+
+def pathSeparator():
+    return '/'
+
+def vmwarePath():
+    if isWorkstationInstalled():
+        return 'vmware'
+    return 'vmplayer'

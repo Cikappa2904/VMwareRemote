@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
@@ -20,7 +21,7 @@
 </script>
 <body>
     <nav class="nav-wraper">
-        <a href="#" class="brand-logo" style="font-size: 20px; margin-left: 10px;">Home</a>
+        <a href="/" class="brand-logo" style="font-size: 20px; margin-left: 10px;">Home</a>
         <a href="#" class="sidenav-trigger" data-target="mobile-links">
             <i class="material-icons">menu</i>
         </a>
@@ -32,6 +33,7 @@
     <ul class="sidenav" id="mobile-links">
         <li><a href="https://github.com/Cikappa2904/VMwareRemote">GitHub</a></li>
     </ul>
+
     <div class="container">
         <ul id="specsUL" class="collection with-header">
             <li class="collection-header green lighten-2"><center><h4>{{vmName}}</h2></center></li>
@@ -46,7 +48,7 @@
             <!-- Modal Trigger -->
             <a class="waves-effect waves-light btn modal-trigger" href="#modal1" id="">Edit</a>
             <!-- <a class="waves-effect waves-light btn blue-grey darken-2" id="editVM">Edit</a> -->
-            <a class="waves-effect waves-light btn blue-grey darken-2" id="cloneVM">Clone</a>
+            <a class="waves-effect waves-light btn modal-trigger" href="#modal2" id="cloneVM">Clone</a>
         </center>
     </div>  
     
@@ -61,10 +63,6 @@
             <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
             <label for="cpuCores">RAM: </label><br>
             <input type="number" onKeyDown='checkMAXValue(this, "{{hostRAM}}" )' min="4" max="{{hostRAM}}" value="1024" name="ram" id="ram"><br>
-            <!-- <p> <label for="VNC">VNC Enabled:
-                    <input type="checkbox" class="filled-in"  name="VNC" id="VNC" onclick='checkVNC(this);'/> <br>
-                </label>
-            </p> -->
             <p>
                 <label> 
                   <input type="checkbox" class="filled-in" name="VNC" id="VNC" onclick="checkVNC(this);"/>
@@ -112,6 +110,23 @@
         <a href="#!" class="modal-close waves-effect waves-green btn-flat" onclick="submitForm()">Agree</a>
     </div>
     </div>
+
+
+     
+
+    <!-- Modal Structure -->
+    <div id="modal2" class="modal">
+        <div class="modal-content">
+        <h4>Please wait.</h4>
+        <p>The server is cloning the virtual machine. This could take a while.</p>
+            <div class="progress">
+                <div class="indeterminate"></div>
+            </div>
+        </div>
+    </div>
+
+
+
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -212,7 +227,6 @@
         addHidden(form, "networkCardNumber", netNumber); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
         form.submit();
     }
-    form.appendChild(submitButton);
 </script>
 
 <script>
@@ -279,9 +293,8 @@
     cloneButton.onclick = function()
     {
         let vmName = prompt("Insert new VM name: ");
-        console.log(vmName)
         cloneVM(vmName)
-        //TODO: clone waiting thing
+        
     }
     function runVM()
     {
@@ -329,6 +342,12 @@
         xmlHttp.send(null);
     }
 
+    function loadingWheel()
+    {
+        const spinningBackground = document.getElementById("spinningBackground");
+        spinningBackground.style.zIndex = 3;
+    }
+
     function cloneVM(vmName)
     {
         var xmlHttp = new XMLHttpRequest();
@@ -340,6 +359,7 @@
                 if (xmlHttp.status === 200) 
                 {
                     alert("VM cloned successfully");
+                    $('#modal2').modal('close');
                 }
                 else
                 {
