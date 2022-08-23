@@ -220,7 +220,8 @@ def editVM():
         if not vncPort.isnumeric(): abort(400)
 
         networkCardNumber = request.form.get('networkCardNumber')
-        biosType = request.form.get('biosType')
+        biosType = 'bios' if request.form.get('biosType') == 'BIOS' else 'efi'
+        print(biosType)
 
         #f = open(vmPathList[vmNumber], 'r')
         with open(vmPathList[vmNumber], 'r') as f:

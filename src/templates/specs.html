@@ -43,19 +43,178 @@
         </ul>
         <center>
             <a class="waves-effect waves-light btn blue-grey darken-2" id="runVM">run</a>
-            <a class="waves-effect waves-light btn blue-grey darken-2" id="editVM">Edit</a>
+            <!-- Modal Trigger -->
+            <a class="waves-effect waves-light btn modal-trigger" href="#modal1" id="">Edit</a>
+            <!-- <a class="waves-effect waves-light btn blue-grey darken-2" id="editVM">Edit</a> -->
             <a class="waves-effect waves-light btn blue-grey darken-2" id="cloneVM">Clone</a>
         </center>
     </div>  
     
+    
+
+    <!-- Modal Structure -->
+    <div id="modal1" class="modal">
+    <div class="modal-content">
+        <form method="post" action="/editVM" name="editForm" id="editForm">
+            <!-- TODO: Check for letters and symbols -->
+            <label for="cpuCores">CPU Cores: </label><br>
+            <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
+            <label for="cpuCores">RAM: </label><br>
+            <input type="number" onKeyDown='checkMAXValue(this, "{{hostRAM}}" )' min="4" max="{{hostRAM}}" value="1024" name="ram" id="ram"><br>
+            <!-- <p> <label for="VNC">VNC Enabled:
+                    <input type="checkbox" class="filled-in"  name="VNC" id="VNC" onclick='checkVNC(this);'/> <br>
+                </label>
+            </p> -->
+            <p>
+                <label> 
+                  <input type="checkbox" class="filled-in" name="VNC" id="VNC" onclick="checkVNC(this);"/>
+                  <span>VNC Enabled: </span>
+                </label>
+              </p>
+            <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
+            <input type="number" value="5900" name="VNCPort" id="VNCPort" style="display:none">
+                
+            <div class="input-field col s1">
+                <select name="biosType" id="biosType">
+                    <option value="UEFI">UEFI</option>
+                    <option value="BIOS">BIOS</option>
+                </select>
+                <label style="margin-left: -10px">BIOS Type</label>
+            </div>
+
+            <label for="howManyNetworkCards">How many network cards?</label>
+            <input type="number" name="howManyNetworkCards" min="0" max="9" value="{{networkCardNumber}}" onchange="changeNetworkCardNumber(this)">
+           <br> <br>
+           <div id="template" style="display: none">
+
+                <div class="input-field col s12">
+                    <select id="networkType">
+                    <option value="nat">nat</option>
+                    <option value="bridged">bridged</option>
+                    <option value="hostonly">hostonly</option>
+                    </select>
+                    <label style="margin-left: -10px">Materialize Select</label>
+                </div>
+                <p>
+                    <label>
+                    <input type="checkbox" class="filled-in" checked="checked" />
+                    <span>Filled in</span>
+                    </label>
+                </p>
+           </div>
+           <div id="networkContainer">
+
+           </div>
+            
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat" onclick="submitForm()">Agree</a>
+    </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
         $(document).ready(function(){
             $('.sidenav').sidenav();
         })
+
+        $(document).ready(function(){
+            $('.modal').modal();
+        });
+
+        $(document).ready(function(){
+            $('select').formSelect();
+        });
     </script>
 </body>
+
+<script>
+        
+        function addHidden(theForm, key, value) {
+        //copied from: https://stackoverflow.com/questions/9251301/how-to-add-a-new-hidden-input-fields-to-the-form-on-submit
+        // Create a hidden input element, and append it to the form:
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key; // 'the key/name of the attribute/field that is sent to the server
+        input.value = value;
+        theForm.appendChild(input);
+    }
+
+    const form = document.forms['editForm'];
+    function checkVNC(checkbox)
+    {
+        if(checkbox.checked) 
+        {
+            document.getElementById("VNCPort").style.display = "block";
+            document.getElementById("VNCPortLabel").style.display = "block";
+        }
+        else
+        {
+            document.getElementById("VNCPort").style.display = "none";
+            document.getElementById("VNCPortLabel").style.display = "none";
+        }
+    }
+    function checkMAXValue(obj, value)
+    {
+        if(parseInt(obj.value)>parseInt(value))
+        {
+            obj.value = value;
+        }
+    }
+    let lastNetworkNumber = 0;
+    const networkDiv = form.lastElementChild;
+
+    function createNetworkInput(netNumber)
+    {   
+        // console.log("lastNetworkNumber:" + lastNetworkNumber);
+        // console.log("netNumber:" + netNumber);
+        if (netNumber - lastNetworkNumber > 0)
+        {
+            
+            for (let i=lastNetworkNumber; i<netNumber; i++)
+            {
+
+                const template = document.getElementById("template");
+                const newEthernet = template.cloneNode(true);
+                newEthernet.children[0].children[0].children[3].name = "ethernet"+i+"_type";
+                newEthernet.children[0].children[1].textContent = "ethernet"+i+"_type: ";
+                newEthernet.children[1].children[0].children[0].name = "ethernet"+i+"_enabled";
+                newEthernet.children[1].children[0].children[1].textContent = "ethernet"+i+"_enabled: ";
+
+                newEthernet.style.display = "inline";
+                networkDiv.appendChild(newEthernet);
+            }
+            lastNetworkNumber = netNumber;
+        }
+        else if (netNumber - lastNetworkNumber < 0)
+        {
+            for (let i=lastNetworkNumber; i>netNumber; i--)
+            {
+                networkDiv.removeChild(networkDiv.lastElementChild);
+            }
+            lastNetworkNumber = netNumber;
+        }    
+        
+
+    }
+    function changeNetworkCardNumber(obj)
+    {
+        netNumber = obj.value;
+        //console.log(netNumber);
+        createNetworkInput(parseInt(netNumber));
+    }
+   
+    addHidden(form, "vmNumber", "{{vmNumber}}"); //the VMNumber is sent to the server so it can change the specs of the right VMs
+    function submitForm()
+    {
+        addHidden(form, "networkCardNumber", netNumber); //the networkCardNumber is sent to the server so it can see how many network cards are there (WIP)
+        form.submit();
+    }
+    form.appendChild(submitButton);
+</script>
+
 <script>
     
     //get JSON (https://stackoverflow.com/questions/12460378/how-to-get-json-from-url-in-javascript)
@@ -69,7 +228,6 @@
         console.log(obj);
         document.getElementById("cpuSpecs").textContent = ("CPU Cores: " + obj['cpuSpecs']);
         document.getElementById("ramSpecs").textContent = ("RAM: " + obj['RAMSpecs'] + " MB");
-        console.log(obj['biosType']);
         if (obj['biosType'] == true) 
         {
             document.getElementById("firmwareLabel").textContent = ("Firmware type: " + 'UEFI');
@@ -117,15 +275,6 @@
         });
     });
     
-
-   
-    
-
-    const editButton = document.getElementById("editVM");
-    editButton.onclick = function()
-    {
-        window.location.href = "/edit.html?vmNumber=" + "{{vmNumber}}";
-    };
     const cloneButton = document.getElementById("cloneVM");
     cloneButton.onclick = function()
     {
