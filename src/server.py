@@ -1,6 +1,4 @@
-from hashlib import new
 from flask import Flask, jsonify, render_template, request, abort, Response
-import re
 import os
 import subprocess
 import platform

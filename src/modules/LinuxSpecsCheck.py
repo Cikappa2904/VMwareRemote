@@ -26,5 +26,8 @@ def pathSeparator():
 
 def vmwarePath():
     if isWorkstationInstalled():
-        return 'vmware'
-    return 'vmplayer'
+        return '/usr/bin/vmware'
+    return '/usr/bin/vmplayer'
+
+def workstationPath() -> str:
+    return '/usr/bin/vmware'

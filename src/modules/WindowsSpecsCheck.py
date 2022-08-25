@@ -27,14 +27,17 @@ def isWorkstationInstalled():
 
 def vmrunPath():
     if isWorkstationInstalled():
-        return 'C:\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe'
-    return 'C:\Program Files (x86)\VMware\VMware Player\\vmrun.exe'
+        return os.environ['SYSTEMDRIVE'] + "\Program Files (x86)\VMware\VMware Workstation\\vmrun.exe"
+    return os.environ['SYSTEMDRIVE'] + "\Program Files (x86)\VMware\VMware Player\\vmrun.exe"
 
 def pathSeparator():
     return '\\'
 
 def vmwarePath():
     if isWorkstationInstalled():
-        return 'C:\Program Files (x86)\VMware\VMware Workstation\\vmware.exe'
-    return 'C:\Program Files (x86)\VMware\VMware Player\\vmplayer.exe'
+        return os.environ['SYSTEMDRIVE'] + "\Program Files (x86)\VMware\VMware Workstation\\vmware.exe"
+    return os.environ['SYSTEMDRIVE'] + "\Program Files (x86)\VMware\VMware Player\\vmplayer.exe"
+
+def workstationPath() -> str:
+    return os.environ['SYSTEMDRIVE'] + "\Program Files (x86)\VMware\VMware Workstation\\vmware.exe"
 
