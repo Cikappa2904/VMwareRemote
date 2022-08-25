@@ -78,15 +78,10 @@ else:
             break
 
 # Downloading the repo from GitHub
+installPath = input('Where do you want to install VMwareRemote? ("' + os.path.expanduser("~") + pathSeparator + 'VMwareRemote")') or os.path.expanduser("~") + pathSeparator + "VMwareRemote"
+if installPath == os.path.expanduser("~") + pathSeparator + "VMwareRemote" and not os.path.exists (os.path.expanduser("~") + pathSeparator + "VMwareRemote"):
+    os.mkdir (installPath)
 
-if hostOS == 'Windows':
-    installPath = input('Where do you want to install VMwareRemote? ("' + os.path.expanduser("~") + '\VMwareRemote")') or os.path.expanduser("~") + "\VMwareRemote"
-    if installPath == os.path.expanduser("~") + "\VMwareRemote" and not os.path.exists (os.path.expanduser("~") + "\VMwareRemote"):
-        os.mkdir (installPath)
-elif hostOS == 'Linux':
-    installPath = input('Where do you want to install VMwareRemote? ("' + os.getenv("HOME") + '/VMwareRemote")') or os.getenv("HOME") + '/VMwareRemote'
-    if installPath == os.getenv("HOME") + '/VMwareRemote' and not os.path.exists(installPath):
-        os.mkdir (installPath)
 
 repoURL = "https://github.com/Cikappa2904/VMwareRemote/archive/development.zip"
 r = requests.get(repoURL, allow_redirects=True)
