@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
   <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
     <meta charset="UTF-8">
@@ -70,7 +70,7 @@
         {
             const newCard = template.cloneNode(true);
             newCard.style.display = "block";
-            newCard.firstElementChild.firstElementChild.firstElementChild.innerHTML = obj["vmName"];
+            newCard.firstElementChild.firstElementChild.firstElementChild.innerHTML = "<b>" + obj["vmName"] + "</b>";
             if (obj["encrypted"])
             {
                 newCard.firstElementChild.firstElementChild.lastElementChild.innerHTML = "Encrypted VM. Unable to view the specs.";

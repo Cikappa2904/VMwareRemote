@@ -37,7 +37,6 @@ def GetSlicedVMXPath(path: str) -> str:
     return slicedPath
 
 def SearchVMsInFileWorkstation(txt: str, vmPathList: list)->list:
-    #TODO: use DisplayName field instead of the vmx file name
     vmList = ''
     for line in txt:
         lineToSearch = '.config = "'
@@ -50,19 +49,6 @@ def SearchVMsInFileWorkstation(txt: str, vmPathList: list)->list:
                     vmList+=line2[line2.find('=')+3:len(line2)-2]
                     vmList+="    "
                     break
-
-            # sliceIndex = 0
-            # for match in re.finditer('.vmx', line):
-            #     vmxPosition = match.start()
-            #     slicedLine = line[:vmxPosition]
-            #     i = 0
-            #     for letter in slicedLine:
-            #         if slicedLine[-i] == "\\" or slicedLine[-i] == "/":
-            #             sliceIndex = -i
-            #             break
-            #         i+=1
-            # vmList+=slicedLine[sliceIndex:]
-            # vmList+="    "
             
     print(vmList)
     return vmList

@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template, request, abort, Response
 import os
 import subprocess
 import platform
+import configparser
 import modules.virtualMachine as VM
 
 app = Flask(__name__)
@@ -11,6 +12,8 @@ vmPathList = []
 vmList = []
 vmArray = []
 
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 if 'Linux' in platform.uname():
     import modules.LinuxSpecsCheck as OSSpecsCheck
@@ -21,8 +24,8 @@ elif 'Windows' in platform.uname():
 else:
     raise Exception("Platform not supported: " + platform.uname())
 
-isWorkstation = OSSpecsCheck.isWorkstationInstalled()
-vmrunPath = OSSpecsCheck.vmrunPath()
+isWorkstation = True if config["VMware_Configuration"]["vmware_version"] == "Pro" else False
+vmrunPath = os.path.join(config["VMware_Configuration"]["vmware_path"], "vmrun") 
 maxRAMSize = OSSpecsCheck.maxRAM()
 
 
@@ -46,19 +49,19 @@ def main():
     #VMware Workstation
     filePath = OSSpecsCheck.inventory()
     if os.path.exists(filePath):
-        f = open(filePath)
-        txt = f.readlines()
-        vmList+=VM.SearchVMsInFileWorkstation(txt, vmPathList)
-        f.close()
+        with open(filePath) as f:
+            txt = f.readlines()
+            vmList+=VM.SearchVMsInFileWorkstation(txt, vmPathList)
+
 
 
     #VMware Player
     filePath = OSSpecsCheck.preferences()
     if os.path.exists(filePath):
-        f = open(filePath)
-        txt = f.readlines()
-        vmList+=VM.SearchVMsInFilePlayer(txt, vmPathList)
-        f.close()
+        with open(filePath) as f:
+            txt = f.readlines()
+            vmList+=VM.SearchVMsInFilePlayer(txt, vmPathList)
+        
     
     for path in vmPathList:
         if os.path.exists(path):
@@ -66,7 +69,9 @@ def main():
                 txt = f.readlines()
                 encrypted = False
                 for line in txt: 
-                    if 'encryption' in line: encrypted = True
+                    if 'encryption' in line: 
+                        encrypted = True
+                        break
 
                 #VMware .vmx files don't have the 'numvcpus=' line when the VM only has 1 core, so we say the VM only has 1 core when we don't find that line
                 coreNumber = VM.CheckForSpecs('numvcpus = "', txt)
@@ -92,7 +97,6 @@ def main():
                 for line in txt:
                     if "ethernet" in line:
                         networkSet.add(line[0:line.find(".")])
-                print(networkSet)
                 networkList = []
                 for el in networkSet:
                     enabled = False
@@ -110,14 +114,12 @@ def main():
             tempVM = VM.VirtualMachine('1','1024',True,False,'5900','',path,False, [], False) #Creating a fake VM because the actual one doesn't exist
             vmArray.append(tempVM)
             del tempVM
-            f.close()
     return render_template("list.html", vmNumbers=len(vmArray))
 
 
 @app.route("/vmOverview")
 def overview():
     x = int(request.args.get("vmNumber"))
-    #if vmArray[x].encrypted == True: return render_template("encrypted.html", vmPath = vmPathList[x]) 
     if vmArray[x].vmName != '':
         overviewDict = {
             'cpuSpecs': vmArray[x].cpuCores,
@@ -282,10 +284,8 @@ def editVM():
                 if not trovatoPort and vncPort != '5900':
                     txt.append('RemoteDisplay.vnc.port = "' + vncPort + '"\n')
 
-        #f = open(vmPathList[vmNumber], 'w')
         with open(vmPathList[vmNumber], 'w') as f:
             f.write(''.join(line for line in txt))
-            f.close()
         return '<script>window.location.href = "/";</script>'
 
 @app.route("/notFound.html")
@@ -298,17 +298,15 @@ def notFound():
 def clone():
     vmNumber = request.args.get("vmNumber")
     vmName = request.args.get("vmName")
-    pathSeparator = OSSpecsCheck.pathSeparator()
-    newVMPath = VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + pathSeparator + vmName + pathSeparator + vmName
+    newVMPath = os.path.join(VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]), vmName, vmName)
     if isWorkstation:
         try:
-            subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + pathSeparator + vmName + pathSeparator + vmName + ".vmx", "full", "-cloneName=" + vmName])
+            subprocess.run([vmrunPath, '-T', 'ws', 'clone', vmPathList[int(vmNumber)], os.path.join(VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]), vmName, vmName, ".vmx"), "full", "-cloneName=", vmName])
         except:
             return 'VM Not Clone'
     else:
-        listPath = OSSpecsCheck.preferences()
         try:
-            subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]) + pathSeparator + vmName + pathSeparator + vmName + ".vmx", "full", "-cloneName=" + vmName])
+            subprocess.run([vmrunPath, '-T', 'player', 'clone', vmPathList[int(vmNumber)], os.path.join(VM.RemoveVMNameFromPath(vmPathList[int(vmNumber)]), vmName, vmName, ".vmx"), "full", "-cloneName=", vmName])
         except:
             return 'VM Not Clone' 
     subprocess.run([OSSpecsCheck.vmwarePath(), newVMPath + '.vmx'])
