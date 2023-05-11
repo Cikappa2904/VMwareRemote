@@ -1,0 +1,29 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #edd5b3;
+    font-family: Arial, sans-serif;
+  }
+  
+    .logo h1 {
+      margin: 0;
+      font-size: 32px;
+      color: white;
+    }
+  
+    header {
+      background-color: rgb(240, 16, 16);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+    }
+    
+  
+    footer {
+      background-color: #edd5b3;
+      color: #d78c13;
+      text-align: center;
+      padding: 10px;
+    }

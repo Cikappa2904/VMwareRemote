@@ -4,12 +4,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Not Found</title>
+    <title>VM Not Found</title>
 </head>
+<link rel="stylesheet" href="notfoundstyle.css">
 <body>
-    <h1>The VM you tried to open was not found.</h1>
-    <h3>Please check if you have moved or renamed the folder containing it.</h2>
+    <header>
+        <table>
+            <tr>
+                <th><img width="75" src="logo.png" alt="VMwareRemote_logo"></th>
+                <th><h1>&nbsp;&nbsp;&nbsp;VM Not Found</h1></th>
+            </tr>
+        </table>
+    </header>
+    <h2 align="center">The VM you tried to open was not found.</h2>
+    <h4 align="center">Please check if you have moved or renamed the folder containing it.</h4>
 </body>
+<br />
+<br />
 <script>
     //Code taken from: https://stackoverflow.com/questions/979975/get-the-values-from-the-get-parameters-javascript
     var url_string = window.location.href; 
@@ -18,4 +29,7 @@
     document.body.appendChild(document.createTextNode("Path: {{vmPath}}"));
 
 </script>
+<footer>
+    <p>&copy; Cikappa2904; GPL-3.0 LICENCE</p>
+</footer>
 </html>

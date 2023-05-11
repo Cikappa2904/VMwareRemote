@@ -1,29 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet" href="edit_style.css">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EditVM</title>
+    <title>Edit VM - Edita la VM</title>
+    <link rel="shortcut icon" href="###" /> <!--Insert favicon icon here - Inserisci qui la favicon-->
 </head>
+<header>
+    <table>
+        <tr>
+            <th><img width="75" src="logo.png" alt="VMwareRemote_logo"></th>
+            <th><h1>&nbsp;&nbsp;&nbsp;Edit VM</h1></th>
+        </tr>
+    </table>
+</header>
 <body>
-    <form method="post" action="/editVM" name="editForm" id="editForm">
+    <br />
+    <form align="center" method="post" action="/editVM" name="editForm" id="editForm">
         <!-- TODO: Check for letters and symbols -->
         <label for="cpuCores">CPU Cores: </label><br>
         <input type="number" onKeyDown='checkMAXValue(this, "{{hostCPUCores}}" )' min="1" max="{{hostCPUCores}}" value="1" name="cpuCores" id="cpuCores"><br>
+        <br />
         <label for="cpuCores">RAM: </label><br>
         <input type="number" onKeyDown='checkMAXValue(this, "{{hostRAM}}" )' min="4" max="{{hostRAM}}" value="1024" name="ram" id="ram"><br>
+        <br />
         <label for="VNC">VNC Enabled:</label>
         <input type="checkbox" name="VNC" id="VNC" onclick='checkVNC(this);'> <br>
+        <br />
         <label for="VNCPort" id="VNCPortLabel" style="display:none">VNC Port: </label>
         <input type="number" value="5900" name="VNCPort" id="VNCPort" style="display:none">
+        <br />
         <label for="biosType">BIOS Type: </label>
         <select name="biosType" id="biosType">
             <option value="UEFI">UEFI</option>
             <option value="BIOS">BIOS</option>
-        <label for="howManyNetworkCards">how many network cards?</label>
+        </select>
+        <br />
+        <br />
+        <label for="howManyNetworkCards">Network Cards: </label>
         <input type="number" name="howManyNetworkCards" min="0" max="9" value="{{networkCardNumber}}" onchange="changeNetworkCardNumber(this)">
-        </select> <br>
+        <br>
         
     </form>
 </body>
@@ -122,4 +140,7 @@
     }
     form.appendChild(submitButton);
 </script>
+<footer>
+    <p>&copy; Cikappa2904; GPL-3.0 LICENCE</p>
+  </footer>
 </html>

@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="it">
+    <link rel="stylesheet" href="list_style.css" />
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VM List</title>
+    <title>VM List - Lista delle VM</title>
+    <link rel="shortcut icon" href="###" /> <!--Insert favicon icon - Inserisci qui la favicon-->
 </head>
 <body>
-   <ul id="listOfVMs"></ul>
-</body>
+    <header>
+        <table>
+            <tr>
+                <th><img width="75" src="logo.png" alt="VMwareRemote_logo"></th>
+                <th><h1>&nbsp;&nbsp;&nbsp;VM List</h1></th>
+            </tr>
+        </table>
+    </header>
+<ul id="listOfVMs"></ul>
 <script>
     const vmListString = "{{vmList}}";
     const vmListArray = vmListString.split("    ");
@@ -31,4 +41,8 @@
 
     
 </script>
+</body>
+<footer>
+    <p>&copy; Cikappa2904; GPL-3.0 LICENCE</p>
+  </footer>
 </html>   

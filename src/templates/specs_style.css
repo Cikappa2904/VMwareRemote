@@ -1,0 +1,65 @@
+/* style.css */
+
+  
+  /* General styles */
+  header {
+    background-color: rgb(240, 16, 16);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #edd5b3;
+    font-family: Arial, sans-serif;
+  }
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  li {
+    margin-bottom: 5px;
+  }
+  
+  button {
+    padding: 8px 16px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  
+  h1 {
+    margin: 0;
+  }
+  
+  /* Main content styles */
+  #specsUL {
+    margin: 20px;
+  }
+  
+  #runVM {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    margin: 20px auto;
+    display: block;
+  }
+  
+  #editVM,
+  #cloneVM {
+    margin: 20px auto;
+    display: block;
+  }
+  
+  /* Footer styles */
+  footer {
+    background-color: #edd5b3;
+    color: #d78c13;
+    text-align: center;
+    padding: 10px;
+  }
+  
